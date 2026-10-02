@@ -1,0 +1,158 @@
+{
+  "balance_cero": {
+    "cliente": "Hsiung",
+    "datos": {
+      "CreditScore": 585,
+      "Geography": "France",
+      "Gender": "Male",
+      "Age": 36,
+      "Tenure": 7,
+      "Balance": 0.0,
+      "NumOfProducts": 2,
+      "HasCrCard": 1,
+      "IsActiveMember": 0,
+      "EstimatedSalary": 94283.09
+    },
+    "prediccion": {
+      "churn_prediction": 0,
+      "churn_probability_pct": 6.07
+    },
+    "senales": [
+      "Clientes con 2 producto(s) (n=3672): churn 7.4% vs 20.4% base → x0.36, muy por debajo de la media",
+      "Clientes inactivos y con tarjeta (n=2762): churn 27.1% vs 20.4% base → x1.33, por encima de la media",
+      "Clientes con saldo 0 € (n=2891): churn 13.6% vs 20.4% base → x0.67, por debajo de la media",
+      "[País] Clientes de France (n=3993): churn 15.9% vs 20.4% base → x0.78, por debajo de la media\n[Edad] Clientes de 30-39 años (n=3486): churn 10.9% vs 20.4% base → x0.54, muy por debajo de la media"
+    ],
+    "orientacion_calculada": "riesgo_por_debajo_de_la_media"
+  },
+  "balance_alto": {
+    "cliente": "Lo",
+    "datos": {
+      "CreditScore": 655,
+      "Geography": "Spain",
+      "Gender": "Male",
+      "Age": 38,
+      "Tenure": 3,
+      "Balance": 250898.09,
+      "NumOfProducts": 3,
+      "HasCrCard": 0,
+      "IsActiveMember": 1,
+      "EstimatedSalary": 81054.0
+    },
+    "prediccion": {
+      "churn_prediction": 1,
+      "churn_probability_pct": 95.13
+    },
+    "senales": [
+      "Clientes con 3 producto(s) (n=207): churn 82.1% vs 20.4% base → x4.03, muy por encima de la media",
+      "Clientes activos y sin tarjeta (n=1211): churn 17.2% vs 20.4% base → x0.84, por debajo de la media",
+      "Saldo de 250,898.09 € → percentil 100.0 de la base. Clientes del cuarto cuartil de saldo positivo (n=1277): churn 22.9% vs 20.4% base → x1.13, en línea con la media",
+      "[País] Clientes de Spain (n=2002): churn 16.6% vs 20.4% base → x0.81, por debajo de la media\n[Edad] Clientes de 30-39 años (n=3486): churn 10.9% vs 20.4% base → x0.54, muy por debajo de la media"
+    ],
+    "orientacion_calculada": "riesgo_por_encima_de_la_media"
+  },
+  "multi_producto": {
+    "cliente": "Gardiner",
+    "datos": {
+      "CreditScore": 642,
+      "Geography": "France",
+      "Gender": "Male",
+      "Age": 48,
+      "Tenure": 9,
+      "Balance": 118317.27,
+      "NumOfProducts": 4,
+      "HasCrCard": 0,
+      "IsActiveMember": 0,
+      "EstimatedSalary": 78702.98
+    },
+    "prediccion": {
+      "churn_prediction": 1,
+      "churn_probability_pct": 97.59
+    },
+    "senales": [
+      "Clientes con 4 producto(s) (n=50): churn 100.0% vs 20.4% base → x4.91, muy por encima de la media [muestra pequeña: interpretar con cautela]",
+      "Clientes inactivos y sin tarjeta (n=1119): churn 25.7% vs 20.4% base → x1.26, por encima de la media",
+      "Saldo de 118,317.27 € → percentil 66.9 de la base. Clientes del segundo cuartil de saldo positivo (n=1277): churn 27.5% vs 20.4% base → x1.35, por encima de la media",
+      "[País] Clientes de France (n=3993): churn 15.9% vs 20.4% base → x0.78, por debajo de la media\n[Edad] Clientes de 40-49 años (n=2079): churn 30.5% vs 20.4% base → x1.50, por encima de la media"
+    ],
+    "orientacion_calculada": "riesgo_por_encima_de_la_media"
+  },
+  "inactivo_alemania": {
+    "cliente": "O'Donnell",
+    "datos": {
+      "CreditScore": 525,
+      "Geography": "Germany",
+      "Gender": "Male",
+      "Age": 33,
+      "Tenure": 4,
+      "Balance": 131023.76,
+      "NumOfProducts": 2,
+      "HasCrCard": 0,
+      "IsActiveMember": 0,
+      "EstimatedSalary": 55072.93
+    },
+    "prediccion": {
+      "churn_prediction": 0,
+      "churn_probability_pct": 19.7
+    },
+    "senales": [
+      "Clientes con 2 producto(s) (n=3672): churn 7.4% vs 20.4% base → x0.36, muy por debajo de la media",
+      "Clientes inactivos y sin tarjeta (n=1119): churn 25.7% vs 20.4% base → x1.26, por encima de la media",
+      "Saldo de 131,023.76 € → percentil 78.0 de la base. Clientes del tercer cuartil de saldo positivo (n=1277): churn 25.4% vs 20.4% base → x1.25, por encima de la media",
+      "[País] Clientes de Germany (n=2005): churn 33.1% vs 20.4% base → x1.62, muy por encima de la media\n[Edad] Clientes de 30-39 años (n=3486): churn 10.9% vs 20.4% base → x0.54, muy por debajo de la media"
+    ],
+    "orientacion_calculada": "riesgo_por_debajo_de_la_media"
+  },
+  "perfil_limpio": {
+    "cliente": "Sun",
+    "datos": {
+      "CreditScore": 639,
+      "Geography": "France",
+      "Gender": "Female",
+      "Age": 37,
+      "Tenure": 4,
+      "Balance": 116121.84,
+      "NumOfProducts": 2,
+      "HasCrCard": 0,
+      "IsActiveMember": 1,
+      "EstimatedSalary": 181850.74
+    },
+    "prediccion": {
+      "churn_prediction": 0,
+      "churn_probability_pct": 32.83
+    },
+    "senales": [
+      "Clientes con 2 producto(s) (n=3672): churn 7.4% vs 20.4% base → x0.36, muy por debajo de la media",
+      "Clientes activos y sin tarjeta (n=1211): churn 17.2% vs 20.4% base → x0.84, por debajo de la media",
+      "Saldo de 116,121.84 € → percentil 65.1 de la base. Clientes del segundo cuartil de saldo positivo (n=1277): churn 27.5% vs 20.4% base → x1.35, por encima de la media",
+      "[País] Clientes de France (n=3993): churn 15.9% vs 20.4% base → x0.78, por debajo de la media\n[Edad] Clientes de 30-39 años (n=3486): churn 10.9% vs 20.4% base → x0.54, muy por debajo de la media"
+    ],
+    "orientacion_calculada": "riesgo_por_debajo_de_la_media"
+  },
+  "desacuerdo_franco": {
+    "cliente": "Gray",
+    "datos": {
+      "CreditScore": 613,
+      "Geography": "Germany",
+      "Gender": "Male",
+      "Age": 69,
+      "Tenure": 9,
+      "Balance": 78778.49,
+      "NumOfProducts": 1,
+      "HasCrCard": 0,
+      "IsActiveMember": 1,
+      "EstimatedSalary": 8751.59
+    },
+    "prediccion": {
+      "churn_prediction": 0,
+      "churn_probability_pct": 17.37
+    },
+    "senales": [
+      "Clientes con 1 producto(s) (n=4071): churn 28.0% vs 20.4% base → x1.37, por encima de la media",
+      "Clientes activos y sin tarjeta (n=1211): churn 17.2% vs 20.4% base → x0.84, por debajo de la media",
+      "Saldo de 78,778.49 € → percentil 41.6 de la base. Clientes del primer cuartil de saldo positivo (n=1278): churn 21.0% vs 20.4% base → x1.03, en línea con la media",
+      "[País] Clientes de Germany (n=2005): churn 33.1% vs 20.4% base → x1.62, muy por encima de la media\n[Edad] Clientes de 60-69 años (n=300): churn 36.0% vs 20.4% base → x1.77, muy por encima de la media"
+    ],
+    "orientacion_calculada": "riesgo_por_encima_de_la_media"
+  }
+}

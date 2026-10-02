@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "churn-agentic-system"
+version = "0.1.0"
+description = "Sistema multiagente (CrewAI + Groq) para predicción y retención de churn bancario — TFM"
+readme = "README.md"
+# Python 3.12 fijado en .python-version; uv lo descarga solo si no está instalado.
+requires-python = ">=3.12,<3.13"
+
+# Versiones fijadas a partir del `pip freeze` de los notebooks de Colab
+# (docs/requirements_agente*.txt). scikit-learn y lightgbm DEBEN coincidir con las usadas
+# al entrenar: scaler.pkl y best_model_lgbm.pkl se serializaron con estas versiones.
+# El resto del árbol de dependencias queda fijado en uv.lock.
+dependencies = [
+    # --- Capa ML ---
+    "pandas==2.2.3",
+    "numpy==2.1.3",
+    "scikit-learn==1.6.1",
+    "lightgbm==4.6.0",
+    "joblib==1.6.0",
+    # scipy ya venía con scikit-learn; se declara porque la evaluación usa fisher_exact.
+    "scipy==1.18.1",
+    # --- Capa agéntica ---
+    "crewai==1.15.21",
+    "litellm==1.101.0",
+    "pydantic==2.12.5",
+    # --- Utilidades ---
+    "python-dotenv>=1.0",
+    "pyyaml>=6.0",
+    # --- Frontend ---
+    "streamlit==1.64.0",
+]
+
+[dependency-groups]
+# `uv sync` instala este grupo por defecto; `uv sync --no-dev` lo omite.
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.uv]
+# Solo se resuelve para las plataformas donde se usa el repo (Windows local, Linux).
+environments = [
+    "sys_platform == 'win32'",
+    "sys_platform == 'linux'",
+    "sys_platform == 'darwin'",
+]
+
+# El proyecto se instala en modo editable en .venv (paquetes `backend` y `config`),
+# así scripts/, tests/ y frontend/ los importan sin tocar sys.path.
+[tool.setuptools.packages.find]
+include = ["backend*", "config*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "datos: requiere los datos y artefactos en data/ y models/",
+    "lento: tarda más de unos segundos (recorre los 2.000 clientes o reentrena el modelo)",
+    "crewai: requiere crewai instalado (no llama a Groq)",
+]
+filterwarnings = ["ignore::DeprecationWarning:crewai.*", "ignore::UserWarning:pydantic.*"]

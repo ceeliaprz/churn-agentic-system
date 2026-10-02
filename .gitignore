@@ -1,0 +1,27 @@
+# Secretos
+.env
+
+# Entornos y cachés de Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# Artefactos regenerados por scripts/train_model.py (se comparan con los oficiales, no los sustituyen)
+artefactos_regenerados/
+
+# Ejecuciones nuevas del pipeline (scripts y frontend). Los resultados del notebook,
+# que respaldan la memoria, están en data/results/notebook/ y SÍ se versionan.
+data/results/ejecuciones/*
+!data/results/ejecuciones/.gitkeep
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/

@@ -1,0 +1,50 @@
+{
+  "balance_alto": {
+    "cliente": "Lo",
+    "ruta": "riesgo_alto",
+    "variante_agente": "alto_valor",
+    "resumen_cliente": "Cliente de 38 años, con 3 años de relación bancaria, saldo de 250.898,09 €, 3 productos activos, miembro activo y sin tarjeta de crédito, con un salario estimado de 81.054 €.",
+    "resumen_riesgo": "La probabilidad de churn es del 95,13%. Señales de riesgo mayores a 1: clientes con 3 productos (x4,03) y clientes con saldo en el percentil 100 (x1,13).",
+    "accion_principal": "El gestor personal contactará al cliente para revisar su cartera de productos, identificar aquellos que no utiliza o que podrían consolidarse, y juntos evaluarán si reducir el número de productos a dos puede mejorar su experiencia y reducir el riesgo de abandono.",
+    "palanca_objetivo": "NumOfProducts",
+    "canal": "gestor personal",
+    "justificacion": "La señal de que clientes con 3 productos presentan un churn 4 veces mayor que la media y la simulación reanálisis indica que reducir el número de productos a 2 puede bajar la probabilidad de churn en 73 puntos porcentuales, lo que sugiere que una revisión de la cartera con el cliente es la palanca más efectiva.",
+    "limitaciones": "La recomendación se basa en la sensibilidad del modelo de simulación reanálisis; no implica causalidad ni garantiza que la reducción de productos evitará el churn."
+  },
+  "multi_producto": {
+    "cliente": "Gardiner",
+    "ruta": "riesgo_alto",
+    "variante_agente": "cartera_masiva",
+    "resumen_cliente": "Cliente masculino de 48 años con 9 años de relación, saldo de 118 317,27 €, 4 productos y sin tarjeta de crédito.",
+    "resumen_riesgo": "Probabilidad de churn 97,59%. Señales con multiplicador mayor a 1: 4 productos (x4,91), inactivo y sin tarjeta (x1,26), saldo alto (x1,35) y edad 40‑49 (x1,5).",
+    "accion_principal": "Se incluye en una campaña automatizada de revisión de cartera que invita al cliente a evaluar la utilidad de sus 4 productos, a activar los servicios disponibles y a solicitar una tarjeta de crédito adaptada a sus necesidades.",
+    "palanca_objetivo": "productos, actividad y tarjeta",
+    "canal": "campaña automatizada",
+    "justificacion": "El cliente presenta señales de alto riesgo asociadas a la alta cantidad de productos (x4,91), la inactividad y ausencia de tarjeta (x1,26), y un saldo elevado (x1,35). La campaña automatizada propone revisar la cartera, fomentar la activación de servicios y ofrecer una tarjeta de crédito, abordando las palancas intervenibles identificadas. Además, el caso se ve agravado por la edad de 48 años, que se encuentra en el rango 40‑49 con un riesgo x1,5.",
+    "limitaciones": "La recomendación se basa en tasas históricas de segmentos similares y no en una estimación individual de este cliente."
+  },
+  "perfil_limpio": {
+    "cliente": "Sun",
+    "ruta": "revision",
+    "variante_agente": "cartera_masiva",
+    "resumen_cliente": "Cliente de 37 años, con 4 años de relación, saldo de 116 121,84 €, 2 productos y sin tarjeta de crédito.",
+    "resumen_riesgo": "El Predictor indica una probabilidad de churn del 32,83 %. Señales con multiplicador >1: saldo 116 121,84 € (x1,35).",
+    "accion_principal": "Contact center ofrece al cliente una revisión de sus necesidades de tarjeta de crédito y le presenta una opción de tarjeta adaptada a su perfil.",
+    "palanca_objetivo": "HasCrCard",
+    "canal": "contact center",
+    "justificacion": "El análisis muestra que el saldo elevado aumenta el riesgo de churn, aunque no es intervenible. La simulación indica que ofrecer una tarjeta de crédito no reduce la probabilidad de churn, pero puede fortalecer la relación y la percepción de servicio.",
+    "limitaciones": "La recomendación se basa en la sensibilidad del modelo obtenida con la simulación reanálisis; no implica causalidad."
+  },
+  "desacuerdo_franco": {
+    "cliente": "Gray",
+    "ruta": "revision",
+    "variante_agente": "cartera_masiva",
+    "resumen_cliente": "Cliente de 69 años, con 9 años de antigüedad en la entidad, saldo de 78.78 k €, un solo producto y sin tarjeta de crédito.",
+    "resumen_riesgo": "El Predictor indica una probabilidad de churn del 17.37 %. Señales con multiplicador mayor a 1: clientes con 1 producto (x1.37), clientes de Alemania (x1.62), clientes de 60‑69 años (x1.77).",
+    "accion_principal": "Se incluye en campaña automatizada de revisión de cartera para clientes con 1 producto, ofreciendo la posibilidad de añadir un segundo producto y revisar su cartera.",
+    "palanca_objetivo": "NumOfProducts",
+    "canal": "campaña automatizada",
+    "justificacion": "La simulación reanálisis indica que añadir un segundo producto reduce la probabilidad de churn en 2.3 pp, la mayor sensibilidad entre las palancas disponibles. Además, el caso se ve agravado por el hecho de que el cliente es de Alemania (x1.62) y pertenece al grupo de edad 60‑69 años (x1.77).",
+    "limitaciones": "La recomendación se basa en la sensibilidad del modelo obtenida mediante la simulación reanálisis; no implica causalidad."
+  }
+}

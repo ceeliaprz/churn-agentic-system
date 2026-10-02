@@ -1,0 +1,44 @@
+# Reglas de negocio del sistema agéntico.
+# Fuente única de verdad para umbrales y cortes: config/settings.py los lee de aquí.
+# Valores copiados literalmente del notebook (secciones 6 y 7). Cambiarlos cambia
+# los resultados de la memoria: hacerlo solo de forma deliberada y documentada.
+
+router:
+  # % de churn del Predictor a partir del cual el riesgo es "alto" (Ruta 2)
+  umbral_prob_alta: 50.0
+  # % por debajo del cual el Predictor lo da por "bajo" (candidato a Ruta 1)
+  umbral_prob_baja: 30.0
+  # Percentil de saldo a partir del cual se activa la variante "alto_valor"
+  umbral_valor_alto: 75.0
+
+# Cortes de lift (tasa del segmento / tasa base) usados por las tools del Analista
+# para etiquetar cada segmento frente a la media.
+lift:
+  muy_por_encima: 1.50
+  por_encima: 1.20
+  por_debajo: 0.85
+  muy_por_debajo: 0.60
+  # Por debajo de este tamaño de segmento se añade el aviso de "muestra pequeña"
+  n_muestra_pequena: 100
+
+# Agregación determinista de señales (balance_de_senales): producto de lifts
+balance_senales:
+  umbral_encima: 1.20
+  umbral_debajo: 0.85
+
+# Anclas de los docstrings de las tools (qué niveles quedan por encima/debajo)
+anclas_docstrings:
+  minimo_n_general: 100
+  minimo_n_productos: 30
+
+# Variables del cliente
+palancas_intervenibles:
+  IsActiveMember: "Activar al cliente"
+  HasCrCard: "Ofrecer tarjeta de crédito"
+  NumOfProducts: "Llevar al número de productos más estable"
+variables_no_intervenibles: [Age, Geography, Balance, Gender, Tenure, CreditScore, EstimatedSalary]
+
+# Canal por variante del Recomendador
+canales:
+  alto_valor: ["gestor personal"]
+  cartera_masiva: ["campaña automatizada", "contact center"]

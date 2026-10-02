@@ -1,0 +1,6 @@
+# Normaliza finales de línea (Windows/Linux) y marca los binarios
+* text=auto
+*.pkl binary
+*.ipynb text eol=lf
+*.csv text eol=lf
+*.json text eol=lf

@@ -1,0 +1,17 @@
+crewai==1.15.21
+crewai-cli==1.15.21
+crewai-core==1.15.21
+geopandas==1.1.4
+joblib==1.6.0
+lightgbm==4.6.0
+litellm==1.101.0
+numpy==2.1.3
+pandas==2.2.3
+pandas-datareader==0.11.1
+pandas-gbq==0.30.0
+pandas-stubs==2.2.3.250527
+pydantic==2.12.5
+pydantic-settings==2.15.0
+pydantic_core==2.41.5
+scikit-learn==1.6.1
+sklearn-pandas==2.2.0

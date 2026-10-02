@@ -1,0 +1,50 @@
+{
+  "balance_cero": {
+    "cliente": "Hsiung",
+    "ruta": "cierre_sin_accion",
+    "canal": null,
+    "accion_principal": "Sin acción. El cliente no supera el umbral de riesgo del modelo.",
+    "palanca_objetivo": null,
+    "justificacion": "Probabilidad de churn del modelo por encima o debajo de los umbrales fijos (30.0% / 50.0%). No se han considerado señales adicionales del cliente."
+  },
+  "balance_alto": {
+    "cliente": "Lo",
+    "ruta": "riesgo_alto",
+    "canal": "gestor personal",
+    "accion_principal": "Contacto urgente de retención: ofrecer condiciones preferentes estándar (mismo guion para todos los clientes de esta banda de riesgo).",
+    "palanca_objetivo": null,
+    "justificacion": "Probabilidad de churn del modelo por encima o debajo de los umbrales fijos (30.0% / 50.0%). No se han considerado señales adicionales del cliente."
+  },
+  "multi_producto": {
+    "cliente": "Gardiner",
+    "ruta": "riesgo_alto",
+    "canal": "contact center",
+    "accion_principal": "Contacto urgente de retención: ofrecer condiciones preferentes estándar (mismo guion para todos los clientes de esta banda de riesgo).",
+    "palanca_objetivo": null,
+    "justificacion": "Probabilidad de churn del modelo por encima o debajo de los umbrales fijos (30.0% / 50.0%). No se han considerado señales adicionales del cliente."
+  },
+  "inactivo_alemania": {
+    "cliente": "O'Donnell",
+    "ruta": "cierre_sin_accion",
+    "canal": null,
+    "accion_principal": "Sin acción. El cliente no supera el umbral de riesgo del modelo.",
+    "palanca_objetivo": null,
+    "justificacion": "Probabilidad de churn del modelo por encima o debajo de los umbrales fijos (30.0% / 50.0%). No se han considerado señales adicionales del cliente."
+  },
+  "perfil_limpio": {
+    "cliente": "Sun",
+    "ruta": "riesgo_medio",
+    "canal": "contact center",
+    "accion_principal": "Incluir en seguimiento de riesgo medio: contacto de revisión general, sin oferta específica.",
+    "palanca_objetivo": null,
+    "justificacion": "Probabilidad de churn del modelo por encima o debajo de los umbrales fijos (30.0% / 50.0%). No se han considerado señales adicionales del cliente."
+  },
+  "desacuerdo_franco": {
+    "cliente": "Gray",
+    "ruta": "cierre_sin_accion",
+    "canal": null,
+    "accion_principal": "Sin acción. El cliente no supera el umbral de riesgo del modelo.",
+    "palanca_objetivo": null,
+    "justificacion": "Probabilidad de churn del modelo por encima o debajo de los umbrales fijos (30.0% / 50.0%). No se han considerado señales adicionales del cliente."
+  }
+}

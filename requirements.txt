@@ -1,0 +1,27 @@
+# Versiones fijadas a partir del `pip freeze` de los notebooks de Colab
+# (docs/requirements_agente.txt y docs/requirements_agente_groq.txt).
+# scikit-learn y lightgbm DEBEN coincidir con las usadas al entrenar: scaler.pkl y
+# best_model_lgbm.pkl dependen de estas versiones.
+# Python recomendado: 3.12.
+
+# --- Capa ML ---
+pandas==2.2.3
+numpy==2.1.3
+scikit-learn==1.6.1
+lightgbm==4.6.0
+joblib==1.6.0
+
+# --- Capa agéntica ---
+crewai==1.15.21
+litellm==1.101.0
+pydantic==2.12.5
+
+# --- Utilidades ---
+python-dotenv>=1.0
+pyyaml>=6.0
+
+# --- Frontend ---
+streamlit==1.64.0
+
+# --- Tests ---
+pytest>=8.0

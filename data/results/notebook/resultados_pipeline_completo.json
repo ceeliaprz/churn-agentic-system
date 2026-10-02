@@ -1,0 +1,278 @@
+{
+  "balance_alto": {
+    "cliente": "Lo",
+    "datos": {
+      "CreditScore": 655,
+      "Geography": "Spain",
+      "Gender": "Male",
+      "Age": 38,
+      "Tenure": 3,
+      "Balance": 250898.09,
+      "NumOfProducts": 3,
+      "HasCrCard": 0,
+      "IsActiveMember": 1,
+      "EstimatedSalary": 81054.0
+    },
+    "prediccion": {
+      "cliente": "Lo",
+      "churn_prediction": 1,
+      "churn_probability_pct": 95.13
+    },
+    "senales": [
+      "productos: churn 82.1% vs 20.4% base → x4.03",
+      "actividad: churn 17.2% vs 20.4% base → x0.84",
+      "balance: churn 22.9% vs 20.4% base → x1.13"
+    ],
+    "orientacion_llm": "riesgo_por_encima_de_la_media",
+    "orientacion_calculada": "riesgo_por_encima_de_la_media",
+    "ruta_info": {
+      "ruta": 2,
+      "nombre_ruta": "recomendador_riesgo_alto",
+      "variante": "alto_valor",
+      "percentil_valor": 100.0,
+      "motivo": "Predictor alto (95.1%) → Recomendador, variante 'alto_valor' (percentil de saldo 100.0)."
+    },
+    "tokens_predictor": 2224,
+    "tokens_analista": 12659,
+    "recomendacion": {
+      "cliente": "Lo.",
+      "ruta": "riesgo_alto",
+      "variante_agente": "alto_valor",
+      "resumen_cliente": "Cliente masculino de 38 años, con 3 años de relación, saldo de 250,898.09€, y 3 productos bancarios activos.",
+      "resumen_riesgo": "La probabilidad de churn es 95.13%. Las señales con multiplicador mayor a 1 son: productos (x4.03) y balance (x1.13).",
+      "accion_principal": "El gestor personal contactará al cliente para revisar su cartera de productos, identificando aquellos que no se utilizan con frecuencia y evaluando la posibilidad de consolidar o simplificar la oferta, con el objetivo de reducir el número de productos a dos.",
+      "palanca_objetivo": "productos",
+      "canal": "gestor personal",
+      "justificacion": "El análisis muestra que el factor de productos tiene el mayor impacto en el riesgo de churn (x4.03) y la simulación reanálisis indica que reducir el número de productos a dos disminuiría la probabilidad de churn en 73 puntos porcentuales. El caso se ve agravado por el alto saldo, aunque no es una palanca intervenible.",
+      "limitaciones": "La simulación reanálisis mide la sensibilidad del modelo, no la causalidad, y la recomendación se basa en esa sensibilidad."
+    },
+    "tokens_recomendador": 41201
+  },
+  "multi_producto": {
+    "cliente": "Gardiner",
+    "datos": {
+      "CreditScore": 642,
+      "Geography": "France",
+      "Gender": "Male",
+      "Age": 48,
+      "Tenure": 9,
+      "Balance": 118317.27,
+      "NumOfProducts": 4,
+      "HasCrCard": 0,
+      "IsActiveMember": 0,
+      "EstimatedSalary": 78702.98
+    },
+    "prediccion": {
+      "cliente": "Gardiner",
+      "churn_prediction": 1,
+      "churn_probability_pct": 97.59
+    },
+    "senales": [
+      "productos: Clientes con 4 producto(s) (n=50): churn 100.0% vs 20.4% base → x4.91, muy por encima de la media [muestra pequeña: interpretar con cautela]",
+      "actividad: Clientes inactivos y sin tarjeta (n=1119): churn 25.7% vs 20.4% base → x1.26, por encima de la media",
+      "balance: Saldo de 118,317.27 € → percentil 66.9 de la base. Clientes del segundo cuartil de saldo positivo (n=1277): churn 27.5% vs 20.4% base → x1.35, por encima de la media"
+    ],
+    "conclusion_analista": "El cliente presenta un riesgo de abandono significativamente superior al promedio, impulsado principalmente por la alta cantidad de productos y su inactividad, con un saldo que también contribuye a la tendencia al abandono.",
+    "orientacion_llm": "riesgo_por_encima_de_la_media",
+    "orientacion_calculada": "riesgo_por_encima_de_la_media",
+    "ruta_info": {
+      "ruta": 2,
+      "nombre_ruta": "recomendador_riesgo_alto",
+      "variante": "cartera_masiva",
+      "percentil_valor": 66.9,
+      "motivo": "Predictor alto (97.6%) → Recomendador, variante 'cartera_masiva' (percentil de saldo 66.9)."
+    },
+    "tokens_predictor": 4479,
+    "tokens_analista": 26202,
+    "recomendacion": {
+      "cliente": "Gardiner",
+      "ruta": "riesgo_alto",
+      "variante_agente": "cartera_masiva",
+      "resumen_cliente": "Cliente masculino de 48 años, con 9 años de relación, saldo de 118 317,27 €, 4 productos y sin tarjeta de crédito.",
+      "resumen_riesgo": "Probabilidad de churn 97,59 %. Señales con multiplicador >1: productos (x4,91), actividad (x1,26) e inactividad sin tarjeta (x1,35).",
+      "accion_principal": "Campaña automatizada de revisión de cartera y activación de servicios, con recordatorio de los beneficios de usar los productos y oferta de tarjeta de crédito.",
+      "palanca_objetivo": "productos, actividad, tarjeta",
+      "canal": "campaña automatizada",
+      "justificacion": "La señal de alta cantidad de productos (x4,91) indica riesgo elevado; la inactividad y falta de tarjeta (x1,26) y el saldo moderado (x1,35) también contribuyen. La campaña busca incentivar el uso de los productos y la activación de una tarjeta, reduciendo la probabilidad de abandono.",
+      "limitaciones": "La recomendación se basa en tasas históricas de segmentos similares, no en una estimación individual de este cliente."
+    },
+    "tokens_recomendador": 12367
+  },
+  "perfil_limpio": {
+    "cliente": "Sun",
+    "datos": {
+      "CreditScore": 639,
+      "Geography": "France",
+      "Gender": "Female",
+      "Age": 37,
+      "Tenure": 4,
+      "Balance": 116121.84,
+      "NumOfProducts": 2,
+      "HasCrCard": 0,
+      "IsActiveMember": 1,
+      "EstimatedSalary": 181850.74
+    },
+    "prediccion": {
+      "cliente": "Sun",
+      "churn_prediction": 0,
+      "churn_probability_pct": 32.83
+    },
+    "senales": [
+      "productos: churn 7.4% vs 20.4% base → x0.36",
+      "actividad: churn 17.2% vs 20.4% base → x0.84",
+      "balance: churn 27.5% vs 20.4% base → x1.35"
+    ],
+    "conclusion_analista": "El cliente presenta un riesgo de abandono inferior al promedio, impulsado por la combinación de dos productos y su estatus de miembro activo, aunque su saldo elevado introduce una leve presión al alza.",
+    "orientacion_llm": "riesgo_por_debajo_de_la_media",
+    "orientacion_calculada": "riesgo_por_debajo_de_la_media",
+    "ruta_info": {
+      "ruta": 3,
+      "nombre_ruta": "recomendador_revision",
+      "variante": "cartera_masiva",
+      "percentil_valor": 65.0625,
+      "motivo": "Predictor (32.8%) no llega a riesgo alto y no hay acuerdo claro de riesgo bajo con el Analista (riesgo_por_debajo_de_la_media): Recomendador en modo revisión, con simulación reanálisis obligatoria."
+    },
+    "tokens_predictor": 6710,
+    "tokens_analista": 39128,
+    "recomendacion": {
+      "cliente": "Sun",
+      "ruta": "revision",
+      "variante_agente": "cartera_masiva",
+      "resumen_cliente": "Cliente de 37 años, con 4 años de relación, saldo de 116,121.84€, dos productos y activo en la banca.",
+      "resumen_riesgo": "El Predictor indica una probabilidad de churn del 32.83%. La señal de balance con multiplicador 1.35 sugiere una leve presión al alza.",
+      "accion_principal": "Contact center ofrece una revisión de la cartera y la posibilidad de consolidar productos, junto con la oferta de una tarjeta de crédito si se considera conveniente.",
+      "palanca_objetivo": "tarjeta",
+      "canal": "contact center",
+      "justificacion": "El análisis muestra que la señal de balance (x1.35) aumenta la presión al alza, aunque la variable no es intervenible. La simulación reanálisis indica que la intervención más sensible es ofrecer una tarjeta de crédito, con un cambio de 0.0 puntos porcentuales en la probabilidad de churn. Por ello se propone una revisión de la cartera y la oferta de una tarjeta de crédito a través del contact center.",
+      "limitaciones": "La recomendación se basa en la sensibilidad del modelo obtenida mediante la simulación reanálisis; no implica causalidad."
+    },
+    "tokens_recomendador": 27840
+  },
+  "desacuerdo_franco": {
+    "cliente": "Gray",
+    "datos": {
+      "CreditScore": 613,
+      "Geography": "Germany",
+      "Gender": "Male",
+      "Age": 69,
+      "Tenure": 9,
+      "Balance": 78778.49,
+      "NumOfProducts": 1,
+      "HasCrCard": 0,
+      "IsActiveMember": 1,
+      "EstimatedSalary": 8751.59
+    },
+    "prediccion": {
+      "cliente": "Gray",
+      "churn_prediction": 0,
+      "churn_probability_pct": 17.37
+    },
+    "senales": [
+      "productos: churn 28.0% vs 20.4% base → x1.37",
+      "actividad: churn 17.2% vs 20.4% base → x0.84"
+    ],
+    "conclusion_analista": "El cliente muestra un riesgo de abandono por encima de la media, principalmente debido a la alta tasa de churn de clientes con un solo producto. Su estatus activo y la ausencia de tarjeta reducen ligeramente el riesgo, pero no lo compensan.",
+    "orientacion_llm": "riesgo_por_encima_de_la_media",
+    "orientacion_calculada": "riesgo_en_linea_con_la_media",
+    "ruta_info": {
+      "ruta": 3,
+      "nombre_ruta": "recomendador_revision",
+      "variante": "cartera_masiva",
+      "percentil_valor": 41.6375,
+      "motivo": "Predictor (17.4%) no llega a riesgo alto y no hay acuerdo claro de riesgo bajo con el Analista (riesgo_en_linea_con_la_media): Recomendador en modo revisión, con simulación reanálisis obligatoria."
+    },
+    "tokens_predictor": 8929,
+    "tokens_analista": 45494,
+    "recomendacion": {
+      "cliente": "Gray",
+      "ruta": "revision",
+      "variante_agente": "cartera_masiva",
+      "resumen_cliente": "El cliente es un hombre de 69 años con 9 años de relación con el banco, saldo de 78,778.49€, activo como miembro y sin tarjeta de crédito, y que utiliza un solo producto.",
+      "resumen_riesgo": "La probabilidad de churn según el Predictor es del 17.37%. La señal de productos muestra un multiplicador de 1.37, indicando mayor riesgo cuando el cliente tiene solo un producto.",
+      "accion_principal": "Se incluye en campaña automatizada de revisión de cartera para clientes con un solo producto, ofreciendo la posibilidad de añadir un segundo producto que se ajuste a sus necesidades.",
+      "palanca_objetivo": "NumOfProducts",
+      "canal": "campaña automatizada",
+      "justificacion": "El análisis indica que el riesgo de churn se ve elevado por la utilización de un solo producto. La simulación reanálisis muestra que añadir un segundo producto reduce la probabilidad de churn en 2.3 puntos porcentuales, la mayor sensibilidad entre las palancas disponibles.",
+      "limitaciones": "La recomendación se basa en la sensibilidad del modelo obtenida mediante la simulación reanálisis; no implica causalidad ni garantiza que la acción evitará el churn."
+    },
+    "tokens_recomendador": 34449
+  },
+  "balance_cero": {
+    "cliente": "Hsiung",
+    "datos": {
+      "CreditScore": 585,
+      "Geography": "France",
+      "Gender": "Male",
+      "Age": 36,
+      "Tenure": 7,
+      "Balance": 0.0,
+      "NumOfProducts": 2,
+      "HasCrCard": 1,
+      "IsActiveMember": 0,
+      "EstimatedSalary": 94283.09
+    },
+    "prediccion": {
+      "cliente": "Hsiung",
+      "churn_prediction": 0,
+      "churn_probability_pct": 6.07
+    },
+    "senales": [
+      "productos: churn 7.4% vs 20.4% base → x0.36",
+      "actividad: churn 27.1% vs 20.4% base → x1.33",
+      "balance: churn 13.6% vs 20.4% base → x0.67"
+    ],
+    "conclusion_analista": "El factor de actividad inactiva con tarjeta eleva significativamente el riesgo de abandono, superando la influencia de los productos y el saldo, lo que posiciona al cliente por encima de la media de riesgo.",
+    "orientacion_llm": "riesgo_por_encima_de_la_media",
+    "orientacion_calculada": "riesgo_por_debajo_de_la_media",
+    "ruta_info": {
+      "ruta": 1,
+      "nombre_ruta": "cierre_sin_recomendador",
+      "variante": null,
+      "percentil_valor": 0.0,
+      "motivo": "Predictor bajo (6.1%) y Analista bajo (riesgo_por_debajo_de_la_media): ambas fuentes coinciden en que no hay caso."
+    },
+    "tokens_predictor": 11155,
+    "tokens_analista": 59669,
+    "recomendacion": null,
+    "tokens_recomendador": null
+  },
+  "inactivo_alemania": {
+    "cliente": "O'Donnell",
+    "datos": {
+      "CreditScore": 525,
+      "Geography": "Germany",
+      "Gender": "Male",
+      "Age": 33,
+      "Tenure": 4,
+      "Balance": 131023.76,
+      "NumOfProducts": 2,
+      "HasCrCard": 0,
+      "IsActiveMember": 0,
+      "EstimatedSalary": 55072.93
+    },
+    "prediccion": {
+      "cliente": "O'Donnell",
+      "churn_prediction": 0,
+      "churn_probability_pct": 19.7
+    },
+    "senales": [
+      "productos: churn 7.4% vs 20.4% base → x0.36",
+      "actividad: churn 25.7% vs 20.4% base → x1.26",
+      "balance: churn 25.4% vs 20.4% base → x1.25"
+    ],
+    "conclusion_analista": "El cliente presenta un riesgo de abandono superior al promedio, impulsado por su inactividad y alto saldo, pese a la baja tasa de churn asociada a la contratación de dos productos.",
+    "orientacion_llm": "riesgo_por_encima_de_la_media",
+    "orientacion_calculada": "riesgo_por_debajo_de_la_media",
+    "ruta_info": {
+      "ruta": 1,
+      "nombre_ruta": "cierre_sin_recomendador",
+      "variante": null,
+      "percentil_valor": 77.97500000000001,
+      "motivo": "Predictor bajo (19.7%) y Analista bajo (riesgo_por_debajo_de_la_media): ambas fuentes coinciden en que no hay caso."
+    },
+    "tokens_predictor": 17910,
+    "tokens_analista": 110312,
+    "recomendacion": null,
+    "tokens_recomendador": null
+  }
+}
