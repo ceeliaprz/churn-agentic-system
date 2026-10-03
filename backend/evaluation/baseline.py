@@ -1,5 +1,4 @@
-"""Comparador de reglas fijas: el "modelo tradicional" (notebook agéntico, sección de
-evaluaciones, "1. Utilidad recomendación con rúbrica").
+"""Comparador de reglas fijas: el "modelo tradicional"
 
 Una acción genérica por banda de riesgo, sin usar ninguna señal del cliente ni la simulación.
 Es la línea base con la que se aplicó la rúbrica: 8/32 frente a 28/32 del pipeline completo.

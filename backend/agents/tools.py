@@ -1,5 +1,5 @@
 """
-Nombres, parámetros y docstrings idénticos al notebook: son lo que ve el LLM para decidir
+Nombres, parámetros y docstrings: son lo que ve el LLM para decidir
 qué tool usar y con qué argumentos (Groq no acepta `dict` genéricos: parámetros escalares).
 
 Las tools se construyen con factorías que reciben sus dependencias (modelo, base de

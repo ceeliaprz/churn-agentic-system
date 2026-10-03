@@ -1,4 +1,4 @@
-"""Base histórica de referencia del Analista (notebook agéntico, celdas 26 y 27).
+"""Base histórica de referencia del Analista (notebook agéntico).
 
 En el notebook, `df_train`, `BASE_CHURN`, `Q_BALANCE_POS`, `referencias_texto`, las anclas
 (`_paises_altos`, `_prod_estable`...) y los docstrings `DOC_CONTEXTO` / `DOC_PRODUCTOS`
@@ -23,7 +23,7 @@ from config import settings
 # ---------------------------------------------------------------------------
 def cargar_df_train(ruta_x: Path = settings.RUTA_X_TRAIN_RAW,
                     ruta_y: Path = settings.RUTA_Y_TRAIN_RAW) -> pd.DataFrame:
-    """Combina X_train_raw e y_train_raw en df_train, como la celda 26."""
+    """Combina X_train_raw e y_train_raw en df_train."""
     X_train_raw = pd.read_csv(ruta_x)
     y_train_raw = pd.read_csv(ruta_y)
     assert len(X_train_raw) == len(y_train_raw)

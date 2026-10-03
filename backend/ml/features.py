@@ -1,6 +1,6 @@
-"""Preprocesado del dataset: una única fuente de verdad para entrenamiento e inferencia.
+"""Preprocesado del dataset.
 
-En los notebooks el mismo preprocesado estaba escrito dos veces:
+Mimso preprocesado en los dos notebooks:
 - `ml_churn_model.ipynb`, celdas 9, 26, 32 y 36 (con `pd.get_dummies` y mapeos por texto).
 - `notebook_pipeline_agentico.ipynb`, celda 13, dentro de `predict_churn` (reescrito a mano).
 
@@ -37,7 +37,6 @@ FEATURE_ORDER_ESPERADO = [
 
 
 def validar_cliente(customer_data: dict) -> None:
-    """Mismas comprobaciones y mensajes que `predict_churn` en el notebook (celda 13)."""
     missing = [c for c in REQUIRED_COLS if c not in customer_data]
     if missing:
         raise ValueError(f"Faltan columnas requeridas para predecir: {missing}")
@@ -51,10 +50,8 @@ def validar_cliente(customer_data: dict) -> None:
 
 def transformar_features(df: pd.DataFrame) -> pd.DataFrame:
     """Aplica limpieza, features derivadas y encoding (sin escalado).
-
-    Pasos (idénticos a los notebooks):
     1. Eliminar identificadores y target si vienen incluidos.
-    2. Features derivadas: HasZeroBalance y ProductRisk (1-2 productos → 0, 3-4 → 1).
+    2. Features derivadas: HasZeroBalance y ProductRisk.
     3. Encoding: Gender (Male=0, Female=1) y one-hot de Geography con France como referencia.
     """
     df = df.copy()

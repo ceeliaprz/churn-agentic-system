@@ -1,8 +1,6 @@
 """Agregación determinista de las señales del Analista (notebook agéntico, celda 35).
 
-El router usa SIEMPRE esta orientación calculada, nunca la `orientacion` que redacta el LLM:
-en Hsiung y O'Donnell el LLM dijo "por encima" y el cálculo "por debajo" (ver
-claude/hallazgos_analista_para_memoria.md §3 y el protocolo de evaluación).
+El router usa SIEMPRE esta orientación calculada, nunca la `orientacion` que redacta el LLM.
 """
 from __future__ import annotations
 

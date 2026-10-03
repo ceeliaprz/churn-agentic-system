@@ -1,7 +1,7 @@
-"""Experimento de variabilidad de selección de tools del Analista (notebook, celdas 41-44).
+"""Experimento de variabilidad de selección de tools del Analista
 
 Resultado ya cerrado y documentado (hallazgos_analista_para_memoria.md): la selección de
-herramientas del Analista NO es fiable, ni con 20B ni con 120B. Se porta para poder
+herramientas del Analista NO es fiable, ni con 20B. Se porta para poder
 reproducirlo; ejecutarlo consume cuota de Groq (5 perfiles × N repeticiones).
 
 Los CSV de resultados originales están en data/results/notebook/.

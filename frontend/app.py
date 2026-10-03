@@ -6,6 +6,7 @@ El chat habla con `backend.chat.AsistenteChat`, un agente que decide en cada pre
 agentes del sistema activar (Predictor, Analista, Recomendador).
 """
 import sys
+import threading
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -13,19 +14,24 @@ if str(RAIZ) not in sys.path:
     sys.path.insert(0, str(RAIZ))
 
 import streamlit as st  # noqa: E402
+from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ctx  # noqa: E402
 
 from config import settings  # noqa: E402
+from backend.pipeline import consumo  # noqa: E402
 from backend.chat.asistente import AsistenteChat  # noqa: E402
 from backend.chat.herramientas import HerramientasChat  # noqa: E402
 from frontend.components.trazas import mostrar_llamadas, mostrar_recomendaciones  # noqa: E402
 
 st.set_page_config(page_title="Asistente de retención", page_icon="🏦", layout="centered")
 
+# Un ejemplo por herramienta del Asistente, en el mismo orden: buscar_cliente,
+# consultar_predictor, consultar_analista, recomendar, resumen_cartera.
 EJEMPLOS = [
+    "Busca a los clientes que se apellidan Sun y dime sus datos básicos",
     "¿Qué riesgo de abandono tiene Gray, el cliente alemán de 69 años?",
     "¿Por qué tiene ese riesgo el cliente del perfil balance_cero?",
     "Dame una recomendación de retención para el perfil perfil_limpio",
-    "¿Qué clientes se apellidan Sun?",
+    "¿Qué clientes de Alemania están en revisión y cuáles tienen más riesgo?",
 ]
 
 
@@ -53,12 +59,28 @@ historial: list = st.session_state.historial
 hay_clave = settings.hay_api_key()
 
 
+def _escritor(estado):
+    """estado.write utilizable desde los hilos de CrewAI.
+
+    Los agentes corren en un hilo aparte (asyncio.to_thread) y los avisos de espera por el
+    límite de Groq se emiten desde ahí. Streamlit solo deja escribir desde un hilo con el
+    contexto de la sesión, así que se le asocia el contexto del script antes de escribir.
+    """
+    ctx = get_script_run_ctx()
+
+    def escribir(mensaje: str) -> None:
+        if ctx is not None and get_script_run_ctx(suppress_warning=True) is None:
+            add_script_run_ctx(threading.current_thread(), ctx)
+        estado.write(mensaje)
+    return escribir
+
+
 def _procesar(accion, etiqueta: str):
     """Ejecuta una acción del asistente mostrando el progreso y guarda el turno."""
     with st.chat_message("assistant"):
         with st.status(etiqueta, expanded=False) as estado:
             try:
-                turno = accion(estado.write)
+                turno = accion(_escritor(estado))
             except Exception as e:  # noqa: BLE001 — se muestra al usuario, la sesión sigue viva
                 estado.update(label="Error", state="error")
                 historial.append({'rol': 'assistant', 'llamadas': [], 'tokens': 0,
@@ -78,14 +100,19 @@ with st.sidebar:
         st.success("Groq configurado")
     else:
         st.error("Falta `GROQ_API_KEY` en `.env`")
-    st.metric("Tokens de esta conversación", _miles(asistente.tokens_totales))
-    st.caption(f"Asistente: {_miles(asistente.tokens_llm)} · Agentes: {_miles(asistente.tokens_agentes)}.")
-    st.progress(min(asistente.tokens_totales / settings.LIMITE_TOKENS_DIA, 1.0),
+    gasto = consumo.resumen()
+    st.metric("Tokens gastados hoy", _miles(gasto['hoy']))
+    st.progress(min(gasto['hoy'] / settings.LIMITE_TOKENS_DIA, 1.0),
                 text=f"frente al límite diario ({_miles(settings.LIMITE_TOKENS_DIA)})")
-    st.caption("Solo cuenta lo que se ha gastado desde este chat: no incluye ejecuciones por consola "
-               "ni otras pestañas. Los agentes que ya estaban guardados (también si los lanzaste por "
-               "consola) se reutilizan y no suman. El consumo total de tu cuenta se ve en la consola "
-               f"de Groq. Límite por minuto: {_miles(settings.LIMITE_TOKENS_MINUTO)}.")
+    st.caption(f"Día UTC {gasto['dia_utc']} · {gasto['llamadas_hoy']} llamadas a Groq · "
+               f"últimas 24 h: {_miles(gasto['ultimas_24h'])}.")
+    st.caption(f"Esta conversación: {_miles(asistente.tokens_totales)} "
+               f"(Asistente {_miles(asistente.tokens_llm)} · Agentes {_miles(asistente.tokens_agentes)}).")
+    st.caption("Cuenta todas las llamadas a Groq hechas con este repositorio en este ordenador "
+               "(chat, agentes y scripts por consola), incluidos los intentos que luego se "
+               "repitieron. No incluye el notebook de Colab ni otros programas con la misma clave: "
+               "el total exacto de la cuenta está en la consola de Groq. "
+               f"Límite por minuto: {_miles(settings.LIMITE_TOKENS_MINUTO)}.")
     if st.button("Nueva conversación", width="stretch"):
         asistente.reiniciar()
         historial.clear()
@@ -108,7 +135,8 @@ if not historial:
             "Hola. Pregúntame por cualquier cliente del conjunto de test y activaré los agentes del "
             "sistema que hagan falta: el **Predictor** para el riesgo, el **Analista** para el porqué "
             "y el **Recomendador** (tras el router) para la acción de retención. Antes de activar el "
-            "Analista o el Recomendador te diré cuántos tokens cuesta y te pediré confirmación.\n\n"
+            "Analista o el Recomendador te diré cuántos tokens cuesta y te pediré confirmación. "
+            "También puedes preguntarme por la cartera completa (sin coste de agentes).\n\n"
             "Cada cifra sale de un agente o herramienta; puedes verlo en *Herramientas usadas*. "
             "Prueba, por ejemplo:")
         for i, ejemplo in enumerate(EJEMPLOS):

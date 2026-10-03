@@ -1,7 +1,6 @@
 """Agente Analista (notebook agéntico, celdas 32 y 34).
 
-Caracteriza al cliente frente al histórico de df_train con 4 tools. Modelo cerrado:
-gpt-oss-20b (se probó 120b y no mejoró; ver hallazgos_analista_para_memoria.md §6-7).
+Caracteriza al cliente frente al histórico de df_train con 4 tools. Modelo:gpt-oss-20b
 """
 from __future__ import annotations
 
@@ -48,9 +47,24 @@ def crear_agente_analista(tools_analista: list, referencias_texto: str,
     )
 
 
-def descripcion_tarea_analisis(nombre_cliente: str, cliente: dict) -> str:
-    datos_formateados = "\n".join(f"- {k}: {v}" for k, v in cliente.items())
+def texto_reanalisis(motivo: str) -> str:
+    """Párrafo que se añade a la tarea cuando el Asistente (capa de orquestación) pide repetir
+    el análisis. Es una indicación, no una orden: el Analista sigue decidiendo qué
+    herramientas consulta. Solo existe en el repo (el notebook no tiene reanálisis)."""
     return (
+        f"\n\nEste es un segundo análisis de este cliente, solicitado por el asistente que "
+        f"coordina el sistema. Motivo: {motivo.strip()}\n"
+        f"Tenlo en cuenta al decidir qué herramientas consultar. Puedes seguir usando cualquiera "
+        f"de ellas, y todas las cifras deben salir de las herramientas."
+    )
+
+
+def descripcion_tarea_analisis(nombre_cliente: str, cliente: dict,
+                               motivo_reanalisis: Optional[str] = None) -> str:
+    """Sin motivo, el texto es idéntico al del notebook (lo comprueba
+    tests/test_prompts_notebook.py). Con motivo, se le añade texto_reanalisis()."""
+    datos_formateados = "\n".join(f"- {k}: {v}" for k, v in cliente.items())
+    descripcion = (
         f"Analiza el perfil del cliente '{nombre_cliente}' frente al histórico de la base.\n"
         f"Datos del cliente:\n{datos_formateados}\n\n"
         f"Empieza por las variables de comportamiento del cliente con la entidad (productos "
@@ -61,6 +75,9 @@ def descripcion_tarea_analisis(nombre_cliente: str, cliente: dict) -> str:
         f"una señal muy alejada de la media (por ejemplo x4) pesa más que varias señales "
         f"ligeramente por debajo. Una sola señal extrema puede determinar la orientación."
     )
+    if motivo_reanalisis and motivo_reanalisis.strip():
+        descripcion += texto_reanalisis(motivo_reanalisis)
+    return descripcion
 
 
 EXPECTED_OUTPUT_ANALISIS = (
@@ -69,10 +86,12 @@ EXPECTED_OUTPUT_ANALISIS = (
 )
 
 
-def analizar_cliente(nombre_cliente: str, cliente: dict, agente: Agent) -> Task:
-    """Tarea del Analista (mismo nombre que en el notebook)."""
+def analizar_cliente(nombre_cliente: str, cliente: dict, agente: Agent,
+                     motivo_reanalisis: Optional[str] = None) -> Task:
+    """Tarea del Analista (mismo nombre que en el notebook). `motivo_reanalisis` solo lo usa
+    el Asistente del chat al repetir un análisis."""
     return Task(
-        description=descripcion_tarea_analisis(nombre_cliente, cliente),
+        description=descripcion_tarea_analisis(nombre_cliente, cliente, motivo_reanalisis),
         expected_output=EXPECTED_OUTPUT_ANALISIS,
         output_pydantic=AnalisisCliente,
         agent=agente,

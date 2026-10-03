@@ -51,8 +51,18 @@ def test_sin_clave_muestra_aviso_y_desactiva_el_chat(entorno, monkeypatch):
 
 def test_bienvenida_con_ejemplos(entorno, monkeypatch):
     at = _app(monkeypatch)
-    assert len([b for b in at.button if b.key and b.key.startswith("ejemplo_")]) == 4
+    from backend.chat.herramientas import ESQUEMAS
+    # Un ejemplo por herramienta del Asistente
+    assert len([b for b in at.button if b.key and b.key.startswith("ejemplo_")]) == len(ESQUEMAS) == 5
     assert not at.chat_input[0].disabled
+
+
+def test_barra_lateral_muestra_el_consumo_del_dia(entorno, monkeypatch):
+    from backend.pipeline import consumo
+    consumo.registrar(12345)
+    at = _app(monkeypatch)
+    metrica = at.sidebar.metric[0]
+    assert metrica.label == "Tokens gastados hoy" and metrica.value == "12.345"
 
 
 def test_pregunta_de_riesgo_activa_el_predictor(entorno, monkeypatch):

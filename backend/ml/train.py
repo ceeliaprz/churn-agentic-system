@@ -1,11 +1,11 @@
-"""Entrenamiento del modelo final (ml_churn_model.ipynb, celdas 4, 9, 26, 32, 36, 38-42, 71-76).
+"""Entrenamiento del modelo final (ml_churn_model.ipynb)
 
-La EDA, la validación cruzada de los 4 modelos, el test de Wilcoxon y la búsqueda de
+El EDA, la validación cruzada de los 4 modelos, el test de Wilcoxon y la búsqueda de
 hiperparámetros NO se repiten aquí: esa selección ya está hecha y justificada en el notebook
 (se conserva en notebooks/). Este módulo reproduce solo el camino que produce los artefactos:
 split estratificado → escalado → LightGBM con los hiperparámetros elegidos → guardado.
 
-Por decisión D1, los artefactos oficiales son los copiados de Drive (models/ y
+Los artefactos oficiales son los copiados de Drive (models/ y
 data/processed/). Por eso `entrenar_y_guardar` escribe por defecto en
 `artefactos_regenerados/` y `verificar_contra_oficiales` comprueba que salen iguales.
 """

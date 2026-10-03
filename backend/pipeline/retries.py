@@ -15,12 +15,18 @@ que el frontend pueda mostrarlos, y `ejecutar_sync` permite llamarlo fuera de Ju
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import re
 from typing import Callable, Optional
 
 from config import settings
 
 Evento = Callable[[str], None]
+
+# Destino de los avisos de LLMConEspera (backend/agents/llm.py) mientras corre un Crew: el LLM
+# no conoce on_evento, así que se le pasa por contexto (asyncio.to_thread copia el contexto).
+aviso_actual: contextvars.ContextVar[Optional[Evento]] = contextvars.ContextVar("aviso_actual",
+                                                                                default=print)
 
 
 def extraer_espera_sugerida(error_msg: str, default: float = 65.0) -> float:
@@ -37,6 +43,7 @@ async def ejecutar_con_reintentos(crew, max_intentos: int = settings.MAX_INTENTO
     registro de llamadas a tools): un reintento repite la tarea entera desde cero, así que lo
     registrado en un intento fallido no debe mezclarse con el intento que sí termina."""
     on_evento = on_evento or (lambda _msg: None)
+    aviso_actual.set(on_evento)
     for intento in range(1, max_intentos + 1):
         try:
             if antes_de_cada_intento is not None:

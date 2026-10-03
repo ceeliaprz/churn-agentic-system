@@ -4,10 +4,11 @@ Tres modos, de menor a mayor coste de Groq:
 
 1. `ejecutar_caso_determinista`  — 0 tokens. Predictor = modelo en Python, Analista = las 4
    tools en Python, router, simulación y comparador tradicional. Sin recomendación LLM.
+   Podría servir como fallback si no quedan tokens o se cae el servicio de GROQ.
 2. `ejecutar_recomendador`       — solo el Recomendador con LLM, sobre un caso determinista
-   (equivale a la prueba 7.6 del notebook). ≈12k-41k tokens.
+   (equivale a la prueba controlada notebook). ≈12k-41k tokens.
 3. `ejecutar_pipeline_cliente`   — Predictor + Analista + Recomendador con LLM, cada uno en su
-   propio Crew de una sola tarea, en secuencia, guardado por etapa y reanudable (sección 8.1).
+   propio Crew de una sola tarea, en secuencia, guardado por etapa y reanudable
    ≈25–35k tokens por cliente (reintentos incluidos).
 
 Cada ejecución crea su propio registro de llamadas, sus tools y sus agentes: no hay estado
@@ -124,9 +125,11 @@ async def ejecutar_predictor(nombre_cliente: str, customer_data: dict,
 
 async def ejecutar_analista(nombre_cliente: str, customer_data: dict,
                             ctx: Optional[ContextoSistema] = None,
-                            on_evento: Optional[Evento] = print) -> Optional[dict]:
+                            on_evento: Optional[Evento] = print,
+                            motivo_reanalisis: Optional[str] = None) -> Optional[dict]:
     """Agente Analista en su propio Crew de una tarea. Devuelve su salida y la orientación
-    calculada con balance_de_senales sobre las tools que invocó de verdad."""
+    calculada con balance_de_senales sobre las tools que invocó de verdad.
+    `motivo_reanalisis` (solo desde el chat) se añade a la tarea cuando se repite un análisis."""
     from crewai import Crew, Process
 
     from backend.agents.analyst import analizar_cliente, crear_agente_analista
@@ -139,7 +142,7 @@ async def ejecutar_analista(nombre_cliente: str, customer_data: dict,
     registro_llamadas = RegistroLlamadas()
     agente = crear_agente_analista(crear_tools_analista(ctx.base, registro_llamadas),
                                    ctx.base.referencias_texto)
-    tarea = analizar_cliente(nombre_cliente, customer_data, agente)
+    tarea = analizar_cliente(nombre_cliente, customer_data, agente, motivo_reanalisis)
     crew = Crew(agents=[agente], tasks=[tarea], process=Process.sequential)
     # El registro se vacía antes de CADA intento: si un rate limit obliga a repetir la tarea,
     # balance_de_senales solo debe ver las tools del intento que termina (si no, los lifts se

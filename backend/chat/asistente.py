@@ -1,7 +1,6 @@
 """Asistente conversacional: una capa encima del sistema multiagente del notebook.
 
-El pipeline del TFM (Predictor → Analista → router → Recomendador) sigue igual. El Asistente es
-un LLM con function calling cuyas herramientas son esos agentes (backend/chat/herramientas.py):
+El Asistente es un LLM con function calling cuyas herramientas son esos agentes (backend/chat/herramientas.py):
 en cada pregunta decide qué agentes activar ("¿qué riesgo tiene?" → solo el Predictor;
 "¿por qué?" → el Analista; "¿qué hacemos?" → recomendar, que completa la cadena y aplica el
 router en Python), si hace falta repetir un análisis y cuándo responder.
@@ -29,10 +28,20 @@ from backend.pipeline.retries import extraer_espera_sugerida
 
 Evento = Optional[Callable[[str], None]]
 
+RESULTADO_RECORTADO = ('{"recortado": true, "nota": "Resultado de un turno anterior recortado para no '
+                       'superar el límite de Groq. Vuelve a llamar a la herramienta si lo necesitas."}')
+
+
+def es_peticion_demasiado_grande(texto_error: str) -> bool:
+    t = texto_error.lower()
+    return "request too large" in t or "reduce your message size" in t
+
 
 def completar_litellm(**kwargs):
     """Llamada al LLM (Groq vía LiteLLM). Los tests sustituyen esta función."""
     import litellm
+    from backend.pipeline import consumo
+    consumo.activar()                     # registra los tokens de hoy (barra lateral)
     return litellm.completion(**kwargs)
 
 
@@ -40,22 +49,24 @@ def prompt_sistema() -> str:
     s = settings
     return f"""Eres el asistente de retención de clientes de un banco. Das acceso conversacional a un sistema multiagente de predicción y retención de churn (TFM) sobre el dataset Churn Modelling (2.000 clientes de test).
 
-Tus herramientas activan los agentes del sistema:
+Tus herramientas activan los agentes y algunas herramientas sueltas del sistema:
 - buscar_cliente: encuentra al cliente (gratis). Úsala primero si solo te dan un apellido; si hay varias coincidencias, enséñalas en una lista corta y pregunta cuál.
 - consultar_predictor: Agente Predictor (modelo LightGBM). Su probabilidad es el riesgo oficial.
 - consultar_analista: Agente Analista. Explica el porqué con señales frente al histórico; cada señal lleva un multiplicador x = churn del segmento / churn medio.
 - recomendar: completa lo que falte (Predictor, Analista), aplica el router en Python y, si procede, activa al Agente Recomendador.
+- resumen_cartera: vista de los 2.000 clientes sin activar agentes (gratis): reparto por rutas y clientes ordenados por probabilidad, con filtros por país, ruta y variante. Para preguntas sobre muchos clientes, conteos o a quién priorizar.
 
-Cómo decide el sistema (para explicarlo, no para calcularlo): el router cierra el caso sin recomendación (Ruta 1) si la probabilidad es < {s.UMBRAL_PROB_BAJA:.0f}% y la orientación calculada del Analista está por debajo de la media; manda a Ruta 2 (riesgo alto) si la probabilidad es ≥ {s.UMBRAL_PROB_ALTA:.0f}%; el resto va a Ruta 3 (revisión). La variante del Recomendador es alto_valor (gestor personal) si el percentil de saldo ≥ {s.UMBRAL_VALOR_ALTO:.0f}; si no, cartera_masiva (campaña automatizada o contact center). El router usa la orientación calculada (producto de multiplicadores), nunca el juicio del LLM.
+Cómo decide el sistema (para explicarlo, no para calcularlo): el router cierra el caso sin recomendación (Ruta 1) si la probabilidad es < {s.UMBRAL_PROB_BAJA:.0f}% y la orientación calculada del Analista está por debajo de la media; manda a Ruta 2 (riesgo alto) si la probabilidad es ≥ {s.UMBRAL_PROB_ALTA:.0f}%; todo lo demás va a Ruta 3 (revisión), es decir, probabilidad entre {s.UMBRAL_PROB_BAJA:.0f}% y {s.UMBRAL_PROB_ALTA:.0f}%, o probabilidad < {s.UMBRAL_PROB_BAJA:.0f}% con orientación calculada en línea o por encima de la media. La variante del Recomendador es alto_valor (gestor personal) si el percentil de saldo ≥ {s.UMBRAL_VALOR_ALTO:.0f}; si no, cartera_masiva (campaña automatizada o contact center). El router usa la orientación calculada (producto de multiplicadores), nunca el juicio del LLM.
 
 Reglas:
-1. Activa solo los agentes que la pregunta necesita: riesgo → Predictor; porqué o perfil → Analista; qué hacer → recomendar (no llames antes a los otros para eso: recomendar ya lo hace). Si un agente ya se ejecutó para ese cliente en esta conversación, usa lo que devolvió en lugar de volver a llamarlo.
+1. Activa solo los agentes que la pregunta necesita: riesgo → Predictor; porqué o perfil → Analista; qué hacer → recomendar (no llames antes a los otros para eso: recomendar ya lo hace). Llama a recomendar solo si el usuario pide qué hacer con el cliente o una acción de retención; para preguntas sobre la ruta, el riesgo o el porqué usa consultar_predictor y consultar_analista, que también devuelven la ruta del router. Si un agente ya se ejecutó para ese cliente en esta conversación, usa lo que devolvió en lugar de volver a llamarlo.
 2. Toda cifra que des debe salir de una herramienta llamada en esta conversación. Nunca estimes ni recuerdes cifras.
 3. No cambies ni recalcules la ruta, la variante ni la orientación: vienen del sistema.
-4. No inventes acciones de retención: la acción la propone el Agente Recomendador.
-5. Si el Analista consultó pocas herramientas y el usuario pide más evidencia, puedes repetir el análisis (consultar_analista con repetir=true).
+4. Nunca propongas, sugieras ni anticipes acciones de retención, ni siquiera como ejemplo o en condicional (nada de "típicamente", "se podría" ni "próximos pasos"). Las acciones solo las propone el Agente Recomendador con la herramienta recomendar. Si no lo has activado en esta conversación, como mucho termina ofreciendo activarlo: "Si quieres una acción concreta, puedo activar al Agente Recomendador".
+5. Si el Analista consultó pocas herramientas y el usuario pide más evidencia, puedes repetir el análisis (consultar_analista con repetir=true). Indica en motivo qué herramientas no consultó y por qué pueden importar para este cliente, según sus datos (p. ej. país o edad de un grupo con más abandono). Al presentar el nuevo análisis, empieza siempre con una comparación breve (1–2 frases) con analisis_anterior: qué herramientas se consultaron antes y ahora, y si la orientación calculada y la ruta cambian o se mantienen.
 6. Si una herramienta devuelve un error o el usuario cancela, explícalo y propón cómo seguir.
-7. Responde en español, breve y claro, en markdown. Al explicar señales, cita el multiplicador (p. ej. x1.33)."""
+7. Para preguntas sobre varios clientes o sobre la cartera usa resumen_cartera, no los agentes. No pases limite salvo que el usuario pida un número concreto de clientes. Al mostrar la lista, incluye siempre la columna Origen (cálculo con las 4 herramientas o análisis real del Agente Analista) y di cuántos clientes hay en total. Si después piden el porqué o qué hacer con un cliente concreto de la lista, usa los agentes con su customer_id.
+8. Responde en español, breve y claro, en markdown. Al explicar señales, cita el multiplicador (p. ej. x1.33)."""
 
 
 @dataclass
@@ -108,24 +119,53 @@ class AsistenteChat:
         self.pendiente = None
 
     # --- internos ------------------------------------------------------------
-    def _mensajes_para_llm(self) -> list[dict]:
-        mensajes = self.mensajes
+    @staticmethod
+    def _tokens_estimados(mensajes: list[dict]) -> int:
+        return sum(len(json.dumps(m, ensure_ascii=False)) for m in mensajes) // settings.CHAT_CARACTERES_POR_TOKEN
+
+    def _mensajes_para_llm(self, agresivo: bool = False) -> list[dict]:
+        """Historial que se envía al LLM, recortado para no superar el límite de Groq.
+
+        1. Como mucho CHAT_MAX_MENSAJES mensajes, empezando siempre en un mensaje de usuario
+           (para no romper los pares tool_call/tool).
+        2. Si supera el presupuesto de tokens, los resultados de herramientas de turnos antiguos
+           se sustituyen por un aviso corto. Se conservan enteros los del último turno y los del
+           anterior (para preguntas como "analiza al primero de la lista"); con agresivo=True,
+           solo los del último.
+        3. Si aún lo supera, se quitan turnos completos, del más antiguo al más reciente.
+        """
+        mensajes = list(self.mensajes)
         if len(mensajes) > settings.CHAT_MAX_MENSAJES:
             corte = len(mensajes) - settings.CHAT_MAX_MENSAJES
-            # Empezar siempre en un mensaje de usuario para no romper pares tool_call/tool
             usuarios = [i for i, m in enumerate(mensajes) if m['role'] == 'user']
             candidatos = [i for i in usuarios if i >= corte]
             inicio = candidatos[0] if candidatos else (usuarios[-1] if usuarios else 0)
             mensajes = mensajes[inicio:]
+
+        presupuesto = settings.CHAT_PRESUPUESTO_TOKENS_HISTORIAL
+        if agresivo or self._tokens_estimados(mensajes) > presupuesto:
+            usuarios = [i for i, m in enumerate(mensajes) if m['role'] == 'user']
+            conservar_desde = (usuarios[-1] if agresivo or len(usuarios) < 2 else usuarios[-2]) if usuarios else 0
+            mensajes = [
+                {**m, 'content': RESULTADO_RECORTADO}
+                if m['role'] == 'tool' and i < conservar_desde and len(m.get('content') or '') > len(RESULTADO_RECORTADO)
+                else m
+                for i, m in enumerate(mensajes)]
+        while self._tokens_estimados(mensajes) > presupuesto:
+            usuarios = [i for i, m in enumerate(mensajes) if m['role'] == 'user']
+            if len(usuarios) <= 1:
+                break
+            mensajes = mensajes[usuarios[1]:]
         return [{"role": "system", "content": prompt_sistema()}] + mensajes
 
     def _llamar_llm(self, on_evento: Evento):
         completar = self._completar or completar_litellm
         avisar = on_evento or (lambda _m: None)
         ultimo_error = None
+        agresivo = False
         for intento in range(1, settings.MAX_INTENTOS + 1):
             try:
-                respuesta = completar(messages=self._mensajes_para_llm(), tools=ESQUEMAS,
+                respuesta = completar(messages=self._mensajes_para_llm(agresivo=agresivo), tools=ESQUEMAS,
                                       tool_choice="auto", **settings.LLM_CHAT)
                 uso = getattr(respuesta, 'usage', None)
                 tokens = getattr(uso, 'total_tokens', None) or 0
@@ -134,6 +174,15 @@ class AsistenteChat:
             except Exception as e:
                 ultimo_error = e
                 texto = str(e)
+                if es_peticion_demasiado_grande(texto):
+                    # Esperar no sirve: la petición sola ya supera el límite por minuto.
+                    if agresivo:
+                        raise RuntimeError(
+                            "La conversación es demasiado larga para el límite de Groq (8.000 tokens por "
+                            "minuto). Pulsa «Nueva conversación» y vuelve a preguntar.") from e
+                    agresivo = True
+                    avisar("⚠️ La petición era demasiado grande para Groq: recorto el historial y reintento...")
+                    continue
                 if "RateLimitError" in str(type(e)) or "rate_limit" in texto.lower():
                     espera = extraer_espera_sugerida(texto, default=settings.ESPERA_DEFAULT_S)
                     avisar(f"⚠️ Límite de Groq alcanzado: espero {espera:.0f} s "

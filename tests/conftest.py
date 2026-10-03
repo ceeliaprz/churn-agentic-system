@@ -96,3 +96,12 @@ def ns_stub():
     return {"Agent": _Registro.kwargs, "Task": _Registro.kwargs, "LLM": _Registro.kwargs,
             "Crew": _Registro.kwargs, "Process": type("P", (), {"sequential": "sequential"}),
             "tool": _Registro.tool, "__name__": "notebook"}
+
+
+@pytest.fixture(autouse=True)
+def consumo_aislado(tmp_path):
+    """Los tests nunca escriben en el registro real de consumo de Groq."""
+    from backend.pipeline import consumo
+    consumo.usar_ruta(tmp_path / "consumo_groq.jsonl")
+    yield
+    consumo.usar_ruta(None)

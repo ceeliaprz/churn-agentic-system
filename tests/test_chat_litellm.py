@@ -72,7 +72,7 @@ def test_conversacion_real_con_litellm(servidor):
     primera, segunda = PETICIONES
     assert primera["model"] == "openai/gpt-oss-20b"
     assert primera["reasoning_effort"] == "low"
-    assert {t["function"]["name"] for t in primera["tools"]} == {"buscar_cliente", "consultar_predictor", "consultar_analista", "recomendar"}
+    assert {t["function"]["name"] for t in primera["tools"]} == {"buscar_cliente", "consultar_predictor", "consultar_analista", "recomendar", "resumen_cartera"}
     tool_msg = segunda["messages"][-1]
     assert tool_msg["role"] == "tool" and tool_msg["tool_call_id"] == "call_1"
     assert json.loads(tool_msg["content"])["total_coincidencias"] == 2

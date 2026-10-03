@@ -1,4 +1,4 @@
-# Secretos
+# Secretos (la plantilla .env.example sí se sube)
 .env
 
 # Entornos y cachés de Python
@@ -25,3 +25,12 @@ data/results/ejecuciones/*
 .DS_Store
 Thumbs.db
 .ipynb_checkpoints/
+
+# Skills de asistentes de IA del editor (no forman parte del proyecto)
+.agents/
+.claude/
+
+# Notas de trabajo personales (no forman parte del entregable)
+NOTAS_CONTINUACION.md
+PLAN.md
+docs/hallazgos_orquestador_chat.md

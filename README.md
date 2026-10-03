@@ -36,6 +36,7 @@ scripts/                 Puntos de entrada por línea de comandos
 tests/                   Tests de regresión contra el notebook
 notebooks/               Notebooks originales (histórico, EDA, selección de modelo)
 docs/                    pip freeze original de Colab
+.env.example             Plantilla del fichero .env (clave de Groq)
 ```
 
 ## Instalación (Windows) con uv
@@ -52,11 +53,31 @@ uv descarga **Python 3.12** por su cuenta (versión fijada en `.python-version`)
    ```powershell
    cd churn-agentic-system
    uv sync
-   copy .env.example .env
    ```
    `uv sync` crea `.venv\`, descarga Python 3.12 si falta, instala las dependencias (incluido pytest) e instala el propio proyecto en modo editable (`backend` y `config`).
 
-Para usar los modos con LLM, edita `.env` y pon tu `GROQ_API_KEY`. El modo determinista funciona sin clave.
+Para usar los modos con LLM (el chat y el pipeline con `--llm`) hace falta una clave de Groq propia: ver la sección siguiente. El modo determinista y los tests funcionan sin clave.
+
+## Clave de la API de Groq (necesaria para el chat y los agentes)
+
+Los agentes usan el modelo `openai/gpt-oss-20b` a través de [Groq](https://groq.com). La clave es personal y **no se incluye en el repositorio**: cada persona tiene que crear la suya. El plan gratuito es suficiente.
+
+1. Crea una cuenta (o entra) en la consola de Groq: <https://console.groq.com>.
+2. En el menú, ve a **API Keys** (<https://console.groq.com/keys>) y pulsa **Create API Key**. Ponle un nombre, por ejemplo `tfm-churn`.
+3. Copia la clave, que empieza por `gsk_`. Groq solo la muestra una vez; si la pierdes, crea otra.
+4. En la carpeta raíz del proyecto (la misma que `pyproject.toml`), crea el fichero `.env` a partir de la plantilla:
+   ```powershell
+   copy .env.example .env
+   ```
+   y sustituye el valor de ejemplo por tu clave:
+   ```
+   GROQ_API_KEY=gsk_tu_clave_aqui
+   ```
+5. Comprueba que funciona: al abrir el chat (`uv run streamlit run frontend/app.py`), la barra lateral debe mostrar «Groq configurado».
+
+El fichero `.env` está en `.gitignore`: nunca se sube a git. No compartas la clave ni la pegues en el código.
+
+**Límites del plan gratuito:** 8.000 tokens por minuto y 200.000 por día (los límites vigentes de tu cuenta están en <https://console.groq.com/settings/limits>). Un cliente completo (los tres agentes) gasta unos 25–35k tokens, así que caben unos 5–6 al día. Si se alcanza el límite por minuto, el sistema espera y reintenta solo. La barra lateral del chat muestra los tokens gastados hoy desde este ordenador; el total exacto de la cuenta se ve en la consola de Groq.
 
 **PyCharm:** *Settings → Project → Python Interpreter → Add Interpreter → Add Local Interpreter → Select existing* y elige `churn-agentic-system\.venv\Scripts\python.exe`, que es el entorno que crea `uv sync`.
 
@@ -96,7 +117,7 @@ No edites `uv.lock` a mano, y súbelo a git junto con `pyproject.toml` y `.pytho
 uv run streamlit run frontend/app.py
 ```
 
-Es una única pantalla de conversación, una **capa encima del pipeline del notebook**. El Asistente es un LLM (Groq, llamado directamente con LiteLLM) cuyas herramientas son **tus tres agentes CrewAI** más una búsqueda. En cada pregunta decide qué agentes activar:
+Es una única pantalla de conversación, una **capa encima del pipeline del notebook**. El Asistente es un LLM (Groq, llamado directamente con LiteLLM) cuyas herramientas son **los tres agentes CrewAI**, una búsqueda de clientes y una vista de la cartera. En cada pregunta decide qué agentes activar:
 
 | Herramienta | Qué activa | Para preguntas como… | Coste aprox. |
 |---|---|---|---|
@@ -104,6 +125,7 @@ Es una única pantalla de conversación, una **capa encima del pipeline del note
 | `consultar_predictor` | **Agente Predictor** | "¿Qué riesgo tiene Gray?" | ≈2,5k |
 | `consultar_analista` | **Agente Analista** | "¿Por qué tiene ese riesgo?" | ≈15k, pide confirmación |
 | `recomendar` | Predictor y Analista si faltan → **router (Python)** → **Agente Recomendador** | "¿Qué hacemos con Gray?" | hasta ≈32k, pide confirmación |
+| `resumen_cartera` | Vista de los 2.000 clientes con el router aplicado (sin agentes) | "¿Qué clientes de Alemania están en revisión?" | 0 |
 
 - Cada agente se ejecuta **una sola vez por cliente**. Sus resultados se guardan por etapas en `data/results/ejecuciones/resultados_pipeline.json`, el mismo archivo y formato que `scripts/run_pipeline.py --llm`.
 - Además, cada mensaje consume unos 3–8k tokens del propio Asistente.
@@ -116,7 +138,7 @@ Es una única pantalla de conversación, una **capa encima del pipeline del note
 |---|---|---|
 | Determinista | Nada. Modelo, tools, router y simulación en Python | 0 |
 | Solo Recomendador | Recomendador (las señales se calculan en Python) | ≈7k–15k |
-| Pipeline completo | Predictor + Analista + Recomendador | ≈25–35k (ejecución real de Lo: 24.892). El notebook reportaba ≈77k, pero estaba acumulado entre clientes: ver `NOTAS_CONTINUACION.md` |
+| Pipeline completo | Predictor + Analista + Recomendador | ≈25–35k (ejecución real de Lo: 24.892). El notebook reportaba ≈77k, pero era el contador acumulado de CrewAI entre clientes |
 | Chat | Asistente (3–8k por pregunta) + los agentes que active | variable |
 
 Límites del tier gratuito de Groq: 8.000 tokens por minuto y 200.000 por día, lo que da unos 5–6 clientes completos al día.

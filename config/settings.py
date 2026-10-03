@@ -5,8 +5,7 @@ Secrets de Colab (`userdata.get('GROQ_API_KEY')`) y las constantes sueltas repar
 las celdas. Todas las rutas son relativas a la raíz del repo, así que funciona igual en
 cualquier ordenador.
 
-Los umbrales de negocio no se definen aquí: se leen de knowledge_base/business_rules.yaml,
-que es la fuente única de verdad.
+Los umbrales de negocio no se definen aquí: se leen de knowledge_base/business_rules.yaml
 """
 from __future__ import annotations
 
@@ -88,12 +87,21 @@ VERBOSE_AGENTES = True
 LLM_CHAT = {"model": MODELO_LLM, "temperature": 0.2, "reasoning_effort": "low"}
 CHAT_MAX_PASOS = 6            # llamadas al LLM por mensaje del usuario (bucle de herramientas)
 CHAT_MAX_MENSAJES = 24        # mensajes de historial que se reenvían (se recorta por turnos)
+# Groq cuenta la petición ENTERA contra el límite de 8.000 tokens/min: una petición más grande no
+# puede pasar nunca, por mucho que se reintente. El historial se recorta a este presupuesto
+# (estimado como caracteres / 3); el prompt de sistema y los esquemas ocupan ~2.500 más.
+CHAT_PRESUPUESTO_TOKENS_HISTORIAL = 4_000
+CHAT_CARACTERES_POR_TOKEN = 3
 CHAT_MAX_RESULTADOS_BUSQUEDA = 10
+CHAT_CARTERA_LIMITE_DEFECTO = 10   # clientes que lista resumen_cartera si no se indica otro número
+# Máximo 30: una lista de 50 clientes ocupa ~3.600 tokens y, con el prompt (~2.400) y la tabla de
+# la respuesta, una sola petición rozaba el límite de 8.000 tokens por minuto de Groq.
+CHAT_CARTERA_LIMITE_MAX = 30
 # Estimaciones orientativas por agente y cliente, para avisar al usuario antes de ejecutarlo.
 # Salen de la ejecución real de Lo con el repo (2.276 / 12.928 / 9.688, reintentos incluidos) y
 # de las diferencias entre clientes consecutivos de la tabla de 8.1 (Predictor ≈2,2k; Analista
 # 6–14k, 50k con muchos reintentos; Recomendador 7–15k). No usar los valores brutos de 8.1:
-# estaban acumulados entre clientes (ver NOTAS_CONTINUACION.md).
+# estaban acumulados entre clientes (contador acumulado de CrewAI).
 TOKENS_ESTIMADOS_PREDICTOR = 2_500
 TOKENS_ESTIMADOS_ANALISTA = 15_000
 TOKENS_ESTIMADOS_RECOMENDADOR = 15_000
@@ -105,6 +113,11 @@ MAX_INTENTOS = 6
 ESPERA_DEFAULT_S = 65
 ESPERA_MINIMA_RATE_LIMIT_S = 60.0
 ESPERA_TOOL_CORRUPTA_S = 5
+# Reintento de UNA llamada al LLM dentro de un agente (LLMConEspera, backend/agents/llm.py):
+# espera lo que sugiere Groq (+ margen) y repite solo esa llamada, sin reiniciar la tarea.
+MAX_ESPERAS_POR_LLAMADA = 6
+MARGEN_ESPERA_LLAMADA_S = 2.0
+ESPERA_MAXIMA_LLAMADA_S = 65.0
 # Pipeline completo por cliente. En el notebook (8.1) figuraba 76.788, pero ese valor estaba
 # acumulado entre clientes; restando consecutivos sale ≈34k, y la ejecución real de Lo dio 24.892.
 TOKENS_MEDIOS_POR_CLIENTE = 34_000

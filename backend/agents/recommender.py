@@ -1,12 +1,9 @@
-"""Agente Recomendador (notebook agéntico, celdas 56 y 58).
+"""Agente Recomendador
 
 Dos variantes de agente (alto_valor / cartera_masiva), elegidas por el router según el
 percentil de saldo. Los campos `ruta` y `variante_agente` de la salida no los decide el LLM:
 vienen fijados por el router en Python.
 
-Textos copiados literalmente del notebook, incluidos los espacios que faltan entre frases
-concatenadas ("antes" "de", "intervenibles." "Si en cambio"): los resultados de la memoria
-se obtuvieron con estos prompts exactos. tests/test_prompts_notebook.py lo comprueba.
 """
 from __future__ import annotations
 

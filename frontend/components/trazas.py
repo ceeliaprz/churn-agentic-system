@@ -10,6 +10,7 @@ ETIQUETAS = {
     'consultar_predictor': "🔵 Agente Predictor",
     'consultar_analista': "🟢 Agente Analista",
     'recomendar': "🟣 Recomendar (Predictor/Analista si faltan → router → Agente Recomendador)",
+    'resumen_cartera': "📊 Vista de cartera (sin agentes)",
 }
 
 

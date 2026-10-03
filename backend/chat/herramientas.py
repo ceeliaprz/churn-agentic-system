@@ -8,7 +8,9 @@ agentes activar:
     buscar_cliente       apellido / CustomerId / perfil → cliente del test set   (0 tokens)
     consultar_predictor  Agente Predictor → probabilidad de churn (riesgo oficial) (≈2,5k)
     consultar_analista   Agente Analista → señales, conclusión, orientación       (≈15k, confirma)
+                         repetir=true + motivo → reanálisis con una indicación de qué faltó
     recomendar           lo que falte de Predictor/Analista → router → Recomendador (confirma)
+    resumen_cartera      vista determinista de los 2.000 clientes: filtrar y priorizar  (0 tokens)
 
 Cada agente se ejecuta una sola vez por cliente: los resultados se guardan por etapas en
 data/results/ejecuciones/resultados_pipeline.json (el mismo archivo y formato que usa
@@ -32,6 +34,10 @@ Evento = Optional[Callable[[str], None]]
 
 NOMBRES_RUTA = {1: "Ruta 1 — cierre sin Recomendador", 2: "Ruta 2 — riesgo alto",
                 3: "Ruta 3 — revisión"}
+ORIENTACION_CORTA = {'riesgo_por_encima_de_la_media': 'por encima',
+                     'riesgo_en_linea_con_la_media': 'en línea',
+                     'riesgo_por_debajo_de_la_media': 'por debajo'}
+ORIGEN_CORTO_CALCULADO = 'cálculo 4 herramientas'
 
 
 def _json(obj) -> str:
@@ -47,10 +53,11 @@ def correr_predictor(nombre, datos, ctx, on_evento):
     return ejecutar_sync(ejecutar_predictor(nombre, datos, ctx, on_evento))
 
 
-def correr_analista(nombre, datos, ctx, on_evento):
+def correr_analista(nombre, datos, ctx, on_evento, motivo=None):
     from backend.pipeline.orchestrator import ejecutar_analista
     from backend.pipeline.retries import ejecutar_sync
-    return ejecutar_sync(ejecutar_analista(nombre, datos, ctx, on_evento))
+    return ejecutar_sync(ejecutar_analista(nombre, datos, ctx, on_evento,
+                                           motivo_reanalisis=motivo))
 
 
 def correr_recomendador(nombre, datos, prediccion, senales, ruta_info, ctx, conclusion, on_evento):
@@ -91,10 +98,16 @@ ESQUEMAS = [
         "Activa el Agente Analista: caracteriza al cliente frente al histórico con sus herramientas "
         "(productos, actividad, saldo, contexto demográfico) y devuelve señales con multiplicador, "
         "conclusión y orientación. Úsalo cuando pregunten POR QUÉ o qué perfil tiene el cliente. "
-        "Con repetir=true vuelve a ejecutarlo aunque ya haya un análisis guardado (por ejemplo si el "
-        "análisis anterior consultó pocas herramientas). Consume unos 15.000 tokens.",
+        "Con repetir=true vuelve a ejecutarlo aunque ya haya un análisis guardado. Si repites porque "
+        "falta información, indica en 'motivo' qué no se consultó y por qué puede importar para este "
+        "cliente: el Analista lo recibe como indicación y sigue decidiendo qué herramientas usa. "
+        "Consume unos 15.000 tokens.",
         {"customer_id": _ID,
-         "repetir": {"type": "boolean", "description": "Rehacer el análisis aunque exista uno guardado"}},
+         "repetir": {"type": "boolean", "description": "Rehacer el análisis aunque exista uno guardado"},
+         "motivo": {"type": "string",
+                    "description": "Solo al repetir: qué faltó en el análisis anterior y por qué puede "
+                                   "importar (p. ej. herramientas no consultadas que encajan con el "
+                                   "perfil del cliente). Se le pasa al Analista."}},
         ["customer_id"]),
     _funcion(
         "recomendar",
@@ -103,6 +116,23 @@ ESQUEMAS = [
         "activa al Agente Recomendador con la variante que corresponda. No hace falta llamar antes a "
         "los otros agentes. La interfaz pedirá confirmación del coste.",
         {"customer_id": _ID}, ["customer_id"]),
+    _funcion(
+        "resumen_cartera",
+        "Vista de toda la cartera (los 2.000 clientes de test) sin activar ningún agente: reparto por "
+        "rutas y lista de clientes ordenada de mayor a menor probabilidad de churn, con filtros "
+        "opcionales por país, ruta y variante. Úsala para preguntas sobre muchos clientes, conteos o "
+        "priorización (p. ej. 'qué clientes de Alemania están en revisión', 'a quién contacto "
+        "primero'). La probabilidad es la del modelo y la ruta la del router; la orientación es la "
+        "calculada con las 4 herramientas del Analista, salvo en los clientes que el Agente Analista ya "
+        "ha analizado, donde se usa su análisis (campo 'origen'). No consume tokens de agentes.",
+        {"pais": {"type": "string", "description": "France, Germany o Spain (opcional)"},
+         "ruta": {"type": "integer", "description": "1 (cierre), 2 (riesgo alto) o 3 (revisión) (opcional)"},
+         "variante": {"type": "string", "description": "alto_valor o cartera_masiva (opcional)"},
+         "limite": {"type": "integer",
+                    "description": f"Solo si el usuario pide un número concreto de clientes; si no, no lo "
+                                   f"pases (por defecto {settings.CHAT_CARTERA_LIMITE_DEFECTO}, "
+                                   f"máximo {settings.CHAT_CARTERA_LIMITE_MAX})"}},
+        []),
 ]
 
 HERRAMIENTAS_CON_CONFIRMACION = {"consultar_analista", "recomendar"}
@@ -117,6 +147,7 @@ class HerramientasChat:
         self.x_test = x_test if x_test is not None else cargar_x_test()
         self._perfiles = {p: int(f.name) for p, f in seleccionar_perfiles_test(self.x_test).items()}
         self.almacen = almacen or AlmacenResultados(ruta_ejecuciones("resultados_pipeline.json"))
+        self._cobertura = None   # cobertura de los 2.000 clientes; se carga la primera vez que se usa
 
     # --- estado por cliente ------------------------------------------------------
     def _fila(self, customer_id) -> Optional[pd.Series]:
@@ -170,6 +201,53 @@ class HerramientasChat:
         } for idx, f in coincidencias.head(settings.CHAT_MAX_RESULTADOS_BUSQUEDA).iterrows()]
         return _json({'total_coincidencias': int(len(coincidencias)), 'clientes': filas})
 
+    def resumen_cartera(self, pais: Optional[str] = None, ruta: Optional[int] = None,
+                        variante: Optional[str] = None, limite: Optional[int] = None) -> str:
+        from backend.decision.cartera import ORIGEN_CALCULADO, cargar_cobertura, construir_vista_cartera, filtrar_cartera
+        if self._cobertura is None:
+            self._cobertura = cargar_cobertura()
+        vista = construir_vista_cartera(self._cobertura, self.x_test, self.ctx.base.df_train,
+                                        self.almacen.datos)
+        try:
+            ruta = int(ruta) if ruta not in (None, "", 0) else None
+        except (TypeError, ValueError):
+            return _json({'error': f"Ruta no válida: {ruta}. Usa 1, 2 o 3."})
+        if ruta is not None and ruta not in NOMBRES_RUTA:
+            return _json({'error': f"Ruta no válida: {ruta}. Usa 1, 2 o 3."})
+        sel = filtrar_cartera(vista, pais=pais, ruta=ruta, variante=variante)
+        try:
+            limite = int(limite) if limite else settings.CHAT_CARTERA_LIMITE_DEFECTO
+        except (TypeError, ValueError):
+            limite = settings.CHAT_CARTERA_LIMITE_DEFECTO
+        limite = max(1, min(limite, settings.CHAT_CARTERA_LIMITE_MAX))
+        # Salida compacta: cada lista se reenvía al LLM en los mensajes siguientes y el límite de
+        # Groq es de 8.000 tokens por minuto (incluida la petición entera).
+        clientes = []
+        for f in sel.head(limite).itertuples():
+            c = {'customer_id': int(f.customer_id), 'apellido': f.apellido}
+            if not pais:
+                c['pais'] = f.pais
+            c.update({'edad': int(f.edad), 'saldo': int(round(float(f.saldo))), 'productos': int(f.productos),
+                      'prob_pct': float(f.probabilidad_pct),
+                      'orientacion': ORIENTACION_CORTA.get(f.orientacion_calculada, f.orientacion_calculada)})
+            if not ruta:
+                c['ruta'] = int(f.ruta)
+            c['variante'] = f.variante
+            c['origen'] = (ORIGEN_CORTO_CALCULADO if f.origen == ORIGEN_CALCULADO
+                           else f"Agente Analista ({int(f.herramientas_agente)}/4)")
+            clientes.append(c)
+        return _json({
+            'filtros': {'pais': pais or None, 'ruta': ruta, 'variante': variante or None},
+            'total_coincidencias': int(len(sel)),
+            'reparto_rutas': {f"Ruta {r}": int(n) for r, n in sel['ruta'].value_counts().sort_index().items()},
+            'clientes_con_analisis_real': int((vista['origen'] != ORIGEN_CALCULADO).sum()),
+            'clientes': clientes,
+            'nota': ("Sin agentes. Orden: mayor probabilidad del modelo. Muestra siempre la columna origen. "
+                     "'cálculo 4 herramientas': orientación calculada en Python con las 4 herramientas del "
+                     "Analista; 'Agente Analista (n/4)': análisis real del agente con n herramientas. "
+                     "Ruta 1 cierre, 2 riesgo alto, 3 revisión."),
+        })
+
     def consultar_predictor(self, customer_id: int, on_evento: Evento = None) -> str:
         fila = self._fila(customer_id)
         if fila is None:
@@ -189,17 +267,28 @@ class HerramientasChat:
                       'router': self._router(reg), 'resultado_guardado': desde_guardado,
                       'tokens_agentes': tokens})
 
-    def consultar_analista(self, customer_id: int, repetir: bool = False, on_evento: Evento = None) -> str:
+    def consultar_analista(self, customer_id: int, repetir: bool = False, motivo: Optional[str] = None,
+                           on_evento: Evento = None) -> str:
         fila = self._fila(customer_id)
         if fila is None:
             return self._no_existe(customer_id)
         reg = self._registro(fila)
+        motivo = (motivo or '').strip() or None
+        repetir = bool(repetir or motivo)          # dar un motivo implica pedir un reanálisis
         tokens, desde_guardado = 0, 'senales' in reg and not repetir
+        anterior = None
         if not desde_guardado:
-            analisis = correr_analista(reg['cliente'], reg['datos'], self.ctx, on_evento)
+            if 'senales' in reg:
+                # Se conserva un resumen del análisis previo para poder compararlos
+                anterior = {'herramientas_invocadas': reg.get('tools_llamadas'),
+                            'orientacion_calculada': reg.get('orientacion_calculada'),
+                            'orientacion_llm': reg.get('orientacion_llm')}
+            analisis = correr_analista(reg['cliente'], reg['datos'], self.ctx, on_evento, motivo=motivo)
             if analisis is None:
                 return _json({'error': "El Agente Analista no completó tras los reintentos (límite de Groq)."})
             reg.update(analisis)
+            reg['motivo_reanalisis'] = motivo
+            reg['analisis_anterior'] = anterior
             reg.pop('recomendacion', None)  # un análisis nuevo invalida la recomendación anterior
             tokens = analisis['tokens_analista'] or 0
             self._guardar(fila, reg)
@@ -209,6 +298,8 @@ class HerramientasChat:
                       'orientacion_calculada': reg['orientacion_calculada'],
                       'herramientas_invocadas': reg.get('tools_llamadas'),
                       'router': self._router(reg), 'resultado_guardado': desde_guardado,
+                      'motivo_reanalisis': reg.get('motivo_reanalisis'),
+                      'analisis_anterior': reg.get('analisis_anterior'),
                       'tokens_agentes': tokens,
                       'nota': "El router usa orientacion_calculada (producto de multiplicadores), "
                               "nunca orientacion_llm."})
@@ -279,7 +370,7 @@ class HerramientasChat:
         reg = self._registro(fila)
         s = settings
         if nombre == 'consultar_analista':
-            if 'senales' in reg and not argumentos.get('repetir'):
+            if 'senales' in reg and not (argumentos.get('repetir') or argumentos.get('motivo')):
                 return None
             agentes = [('Analista', s.TOKENS_ESTIMADOS_ANALISTA)]
         else:
@@ -297,13 +388,14 @@ class HerramientasChat:
 
     def ejecutar(self, nombre: str, argumentos: dict, on_evento: Evento = None) -> str:
         metodos = {'buscar_cliente': self.buscar_cliente, 'consultar_predictor': self.consultar_predictor,
-                   'consultar_analista': self.consultar_analista, 'recomendar': self.recomendar}
+                   'consultar_analista': self.consultar_analista, 'recomendar': self.recomendar,
+                   'resumen_cartera': self.resumen_cartera}
         if nombre not in metodos:
             return _json({'error': f"Herramienta desconocida: {nombre}"})
-        extra = {} if nombre == 'buscar_cliente' else {'on_evento': on_evento}
+        extra = {} if nombre in ('buscar_cliente', 'resumen_cartera') else {'on_evento': on_evento}
         try:
             return metodos[nombre](**argumentos, **extra)
         except TypeError as e:
             return _json({'error': f"Argumentos no válidos para {nombre}: {e}"})
         except Exception as e:  # una herramienta nunca debe tumbar la conversación
-            return _json({'error': f"Error al ejecutar {nombre}: {e}"})
+            return _json({'error': f"Error al ejecutar {nombre}: {type(e).__name__}: {e}"})
