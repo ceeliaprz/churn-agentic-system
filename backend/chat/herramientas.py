@@ -265,7 +265,14 @@ class HerramientasChat:
                       'churn_prediction': reg['prediccion']['churn_prediction'],
                       'churn_probability_pct': reg['prediccion']['churn_probability_pct'],
                       'router': self._router(reg), 'resultado_guardado': desde_guardado,
-                      'tokens_agentes': tokens})
+                      # Sin esto el Asistente decía "el Analista no se ha ejecutado" aunque la ruta
+                      # (que solo existe con análisis) ya venía en la respuesta (caso Houghton)
+                      'analisis_guardado': 'senales' in reg,
+                      'herramientas_analista': len(reg.get('tools_llamadas') or []) if 'senales' in reg else None,
+                      'tokens_agentes': tokens,
+                      'nota': "churn_prediction es la clase del modelo con umbral del 50 %; el sistema decide "
+                              "con la probabilidad y el router, no con la clase. Si analisis_guardado es "
+                              "true, el Analista ya analizó a este cliente y la ruta viene de ese análisis."})
 
     def consultar_analista(self, customer_id: int, repetir: bool = False, motivo: Optional[str] = None,
                            on_evento: Evento = None) -> str:

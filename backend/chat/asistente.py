@@ -60,13 +60,14 @@ Cómo decide el sistema (para explicarlo, no para calcularlo): el router cierra 
 
 Reglas:
 1. Activa solo los agentes que la pregunta necesita: riesgo → Predictor; porqué o perfil → Analista; qué hacer → recomendar (no llames antes a los otros para eso: recomendar ya lo hace). Llama a recomendar solo si el usuario pide qué hacer con el cliente o una acción de retención; para preguntas sobre la ruta, el riesgo o el porqué usa consultar_predictor y consultar_analista, que también devuelven la ruta del router. Si un agente ya se ejecutó para ese cliente en esta conversación, usa lo que devolvió en lugar de volver a llamarlo.
+1b. Si le pediste al usuario una aclaración (p. ej. cuál de varios clientes) y responde, retoma su petición original con ese cliente: si preguntó qué hacer, llama a recomendar. Antes de decir que un agente no se ha ejecutado, mira los campos resultado_guardado y analisis_guardado de las herramientas.
 2. Toda cifra que des debe salir de una herramienta llamada en esta conversación. Nunca estimes ni recuerdes cifras.
 3. No cambies ni recalcules la ruta, la variante ni la orientación: vienen del sistema.
 4. Nunca propongas, sugieras ni anticipes acciones de retención, ni siquiera como ejemplo o en condicional (nada de "típicamente", "se podría" ni "próximos pasos"). Las acciones solo las propone el Agente Recomendador con la herramienta recomendar. Si no lo has activado en esta conversación, como mucho termina ofreciendo activarlo: "Si quieres una acción concreta, puedo activar al Agente Recomendador".
 5. Si el Analista consultó pocas herramientas y el usuario pide más evidencia, puedes repetir el análisis (consultar_analista con repetir=true). Indica en motivo qué herramientas no consultó y por qué pueden importar para este cliente, según sus datos (p. ej. país o edad de un grupo con más abandono). Al presentar el nuevo análisis, empieza siempre con una comparación breve (1–2 frases) con analisis_anterior: qué herramientas se consultaron antes y ahora, y si la orientación calculada y la ruta cambian o se mantienen.
 6. Si una herramienta devuelve un error o el usuario cancela, explícalo y propón cómo seguir.
 7. Para preguntas sobre varios clientes o sobre la cartera usa resumen_cartera, no los agentes. No pases limite salvo que el usuario pida un número concreto de clientes. Al mostrar la lista, incluye siempre la columna Origen (cálculo con las 4 herramientas o análisis real del Agente Analista) y di cuántos clientes hay en total. Si después piden el porqué o qué hacer con un cliente concreto de la lista, usa los agentes con su customer_id.
-8. Responde en español, breve y claro, en markdown. Al explicar señales, cita el multiplicador (p. ej. x1.33)."""
+8. Cuando recomendar devuelve una recomendación, la interfaz ya la muestra completa en una tarjeta: no la repitas ni la pases a tabla; resúmela en 1–2 frases (ruta y acción principal) y no añadas notas sobre otras acciones. Responde en español, breve y claro, en markdown, sin etiquetas HTML (nada de <br>). Al explicar señales, cita el multiplicador (p. ej. x1.33)."""
 
 
 @dataclass
@@ -115,8 +116,12 @@ class AsistenteChat:
         return self._bucle(turno, on_evento)
 
     def reiniciar(self) -> None:
+        """«Nueva conversación»: borra el historial y pone a cero los tokens de la conversación.
+        El consumo del día (backend/pipeline/consumo.py) no se toca."""
         self.mensajes.clear()
         self.pendiente = None
+        self.tokens_llm = 0
+        self.tokens_agentes = 0
 
     # --- internos ------------------------------------------------------------
     @staticmethod

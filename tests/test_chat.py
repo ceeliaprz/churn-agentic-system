@@ -91,6 +91,11 @@ def test_predictor_se_ejecuta_una_vez(herramientas, agentes):
     again = json.loads(herramientas.consultar_predictor(GRAY_ID))
     assert again['resultado_guardado'] and again['tokens_agentes'] == 0
     assert agentes.llamadas == [('Predictor', 'Gray')]
+    assert r['analisis_guardado'] is False and r['herramientas_analista'] is None
+    herramientas.consultar_analista(GRAY_ID)
+    tras = json.loads(herramientas.consultar_predictor(GRAY_ID))
+    assert tras['analisis_guardado'] is True and tras['herramientas_analista'] == 1
+    assert tras['router']['ruta'] == 3
 
 
 def test_analista_y_router(herramientas, agentes):
@@ -253,6 +258,8 @@ def test_prompt_prohibe_recomendar_sin_recomendador():
     assert "Nunca propongas, sugieras ni anticipes acciones de retención" in prompt_sistema()
     assert "comparación breve (1–2 frases) con analisis_anterior" in prompt_sistema()
     assert "Llama a recomendar solo si el usuario pide qué hacer" in prompt_sistema()
+    assert "retoma su petición original" in prompt_sistema()
+    assert "no la repitas ni la pases a tabla" in prompt_sistema()
 
 
 def test_errores(herramientas, agentes, monkeypatch):
@@ -370,6 +377,18 @@ def test_ruta_1_no_pide_confirmacion_si_ya_hay_analisis(asistente_con, herramien
                           respuesta("El router cierra el caso.")])
     t = a.responder("recomienda para Hsiung")
     assert t.pendiente is None and json.loads(t.llamadas[0]['resultado'])['router']['ruta'] == 1
+
+
+def test_nueva_conversacion_pone_a_cero_los_tokens(asistente_con, agentes):
+    """El contador «Esta conversación» de la barra lateral se reinicia con «Nueva conversación»."""
+    a, _ = asistente_con([
+        respuesta(llamadas=[llamada("consultar_predictor", {"customer_id": GRAY_ID})], tokens=300),
+        respuesta("17,37 %.", tokens=200),
+    ])
+    a.responder("riesgo de Gray")
+    assert a.tokens_llm == 500 and a.tokens_agentes == 2000
+    a.reiniciar()
+    assert a.tokens_totales == 0 and a.mensajes == [] and a.pendiente is None
 
 
 def test_argumentos_json_invalidos(asistente_con):
