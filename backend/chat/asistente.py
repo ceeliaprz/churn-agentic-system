@@ -38,7 +38,7 @@ def es_peticion_demasiado_grande(texto_error: str) -> bool:
 
 
 def completar_litellm(**kwargs):
-    """Llamada al LLM (Groq vía LiteLLM). Los tests sustituyen esta función."""
+    """Llamada al LLM (Groq vía LiteLLM)."""
     import litellm
     from backend.pipeline import consumo
     consumo.activar()                     # registra los tokens de hoy (barra lateral)

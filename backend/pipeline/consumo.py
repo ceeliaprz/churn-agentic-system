@@ -32,7 +32,7 @@ def ruta_registro() -> Path:
 
 
 def usar_ruta(ruta: Optional[Path]) -> None:
-    """Cambia el fichero de registro (lo usan los tests)."""
+    """Cambia el fichero de registro (por defecto, data/results/ejecuciones/consumo_groq.jsonl)."""
     global _ruta
     _ruta = Path(ruta) if ruta else None
 

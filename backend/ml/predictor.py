@@ -59,7 +59,7 @@ class ModeloChurn:
         }
 
     def predict_lote(self, df_crudo: pd.DataFrame) -> pd.DataFrame:
-        """Predicción vectorizada de muchos clientes a la vez (para evaluación y tests).
+        """Predicción vectorizada de muchos clientes a la vez (para la evaluación).
         Mismo resultado que llamar a predict_churn fila a fila, pero mucho más rápido."""
         X = self.preparar(df_crudo)
         return pd.DataFrame({

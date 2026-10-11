@@ -34,12 +34,6 @@ dependencies = [
     "streamlit==1.64.0",
 ]
 
-[dependency-groups]
-# `uv sync` instala este grupo por defecto; `uv sync --no-dev` lo omite.
-dev = [
-    "pytest>=8.0",
-]
-
 [tool.uv]
 # Solo se resuelve para las plataformas donde se usa el repo (Windows local, Linux).
 environments = [
@@ -49,15 +43,7 @@ environments = [
 ]
 
 # El proyecto se instala en modo editable en .venv (paquetes `backend` y `config`),
-# así scripts/, tests/ y frontend/ los importan sin tocar sys.path.
+# así scripts/ y frontend/ los importan sin tocar sys.path.
 [tool.setuptools.packages.find]
 include = ["backend*", "config*"]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-markers = [
-    "datos: requiere los datos y artefactos en data/ y models/",
-    "lento: tarda más de unos segundos (recorre los 2.000 clientes o reentrena el modelo)",
-    "crewai: requiere crewai instalado (no llama a Groq)",
-]
-filterwarnings = ["ignore::DeprecationWarning:crewai.*", "ignore::UserWarning:pydantic.*"]

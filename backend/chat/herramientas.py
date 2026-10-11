@@ -45,7 +45,7 @@ def _json(obj) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Ejecución de los agentes (puntos únicos que los tests sustituyen por falsos)
+# Ejecución de los agentes (un único punto de entrada por agente)
 # ---------------------------------------------------------------------------
 def correr_predictor(nombre, datos, ctx, on_evento):
     from backend.pipeline.orchestrator import ejecutar_predictor

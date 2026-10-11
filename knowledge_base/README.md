@@ -1,6 +1,6 @@
 # knowledge_base/
 
-Conocimiento de negocio que usa el sistema, separado del código (decisión D3 del plan: sin RAG).
+Conocimiento de negocio que usa el sistema, separado del código (sin RAG).
 
 | Archivo | Qué es | Cómo se genera |
 |---|---|---|
@@ -12,5 +12,4 @@ Conocimiento de negocio que usa el sistema, separado del código (decisión D3 d
 
 Las tools del Analista siguen calculando sobre `df_train` en memoria, igual que en el
 notebook (necesitan el dataframe para, por ejemplo, el percentil exacto de cualquier saldo).
-El JSON sirve para documentar, para mostrarlo en el frontend y para que un test compruebe que
-los estadísticos no han cambiado (`tests/test_knowledge_base.py`).
+El JSON sirve para documentar los estadísticos de referencia y para comprobar que no han cambiado.

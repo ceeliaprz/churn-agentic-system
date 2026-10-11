@@ -61,8 +61,8 @@ def texto_reanalisis(motivo: str) -> str:
 
 def descripcion_tarea_analisis(nombre_cliente: str, cliente: dict,
                                motivo_reanalisis: Optional[str] = None) -> str:
-    """Sin motivo, el texto es idéntico al del notebook (lo comprueba
-    tests/test_prompts_notebook.py). Con motivo, se le añade texto_reanalisis()."""
+    """Sin motivo, el texto es idéntico al del notebook. Con motivo, se le añade
+    texto_reanalisis()."""
     datos_formateados = "\n".join(f"- {k}: {v}" for k, v in cliente.items())
     descripcion = (
         f"Analiza el perfil del cliente '{nombre_cliente}' frente al histórico de la base.\n"

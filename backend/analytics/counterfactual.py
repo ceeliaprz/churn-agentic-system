@@ -4,7 +4,7 @@ Re-invoca el modelo cambiando, una a una, las variables sobre las que el banco p
 intervenir (activación, tarjeta, número de productos hacia `prod_estable`) y devuelve solo
 el delta en puntos porcentuales. Sensibilidad del modelo, no causalidad.
 
-`simular_palancas` devuelve los datos estructurados (para el frontend y los tests) y
+`simular_palancas` devuelve los datos estructurados (para el pipeline) y
 `texto_simulacion` el texto literal que recibía el LLM en el notebook. El `print` del
 notebook se sustituye por `logging`.
 """
