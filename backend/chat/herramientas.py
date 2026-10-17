@@ -150,8 +150,26 @@ class HerramientasChat:
         self._cobertura = None   # cobertura de los 2.000 clientes; se carga la primera vez que se usa
 
     # --- estado por cliente ------------------------------------------------------
+    def resolver_customer_id(self, valor) -> Optional[int]:
+        """CustomerId a partir de lo que haya pasado el LLM: un entero, un número en texto o un
+        nombre de perfil congelado (p. ej. "balance_cero"). None si no se puede resolver sin
+        ambigüedad (los apellidos se dejan a buscar_cliente, que enseña las coincidencias)."""
+        if isinstance(valor, bool):
+            return None
+        if isinstance(valor, (int, float)) and float(valor).is_integer():
+            return int(valor)
+        texto = str(valor).strip()
+        if texto.isdigit():
+            return int(texto)
+        if texto in self._perfiles:
+            return int(self.x_test.loc[self._perfiles[texto], 'CustomerId'])
+        return None
+
     def _fila(self, customer_id) -> Optional[pd.Series]:
-        filas = self.x_test[self.x_test['CustomerId'] == int(customer_id)]
+        cid = self.resolver_customer_id(customer_id)
+        if cid is None:
+            return None
+        filas = self.x_test[self.x_test['CustomerId'] == cid]
         return None if filas.empty else filas.iloc[0]
 
     @staticmethod

@@ -37,6 +37,41 @@ def es_peticion_demasiado_grande(texto_error: str) -> bool:
     return "request too large" in t or "reduce your message size" in t
 
 
+def extraer_llamada_fallida(texto_error: str) -> Optional[tuple]:
+    """(nombre, argumentos) de la llamada a herramienta que Groq rechazó por no cumplir el
+    esquema (`tool_use_failed`), a partir del campo `failed_generation` del error. None si el
+    error no la incluye o no se puede leer."""
+    inicio = texto_error.find('{"error"')
+    if inicio < 0:
+        return None
+    try:
+        cuerpo, _ = json.JSONDecoder().raw_decode(texto_error[inicio:])
+        generada = cuerpo['error']['failed_generation']
+        llamada = json.loads(generada) if isinstance(generada, str) else generada
+        if isinstance(llamada, list) and len(llamada) == 1:
+            llamada = llamada[0]
+        nombre = str(llamada['name']).split('<|')[0].strip()   # formato harmony: "x<|channel|>..."
+        argumentos = llamada.get('arguments', {})
+        if isinstance(argumentos, str):
+            argumentos = json.loads(argumentos)
+    except (ValueError, KeyError, TypeError, AttributeError):
+        return None
+    if not isinstance(argumentos, dict):
+        return None
+    return nombre, argumentos
+
+
+def respuesta_con_llamada(nombre: str, argumentos: dict):
+    """Respuesta con la misma forma que la de LiteLLM, con una única llamada a herramienta."""
+    from types import SimpleNamespace
+    from uuid import uuid4
+    llamada = SimpleNamespace(id=f"call_reparada_{uuid4().hex[:8]}", type="function",
+                              function=SimpleNamespace(name=nombre,
+                                                       arguments=json.dumps(argumentos, ensure_ascii=False)))
+    mensaje = SimpleNamespace(content=None, tool_calls=[llamada])
+    return SimpleNamespace(choices=[SimpleNamespace(message=mensaje)], usage=None)
+
+
 def completar_litellm(**kwargs):
     """Llamada al LLM (Groq vía LiteLLM)."""
     import litellm
@@ -194,12 +229,35 @@ class AsistenteChat:
                            f"(intento {intento}/{settings.MAX_INTENTOS})...")
                     time.sleep(espera)
                 elif "tool_use_failed" in texto or "<|channel|>" in texto:
+                    reparada = self._reparar_llamada(texto)
+                    if reparada is not None:
+                        return reparada, 0
                     avisar(f"⚠️ El modelo generó una llamada a herramienta mal formada; reintento "
                            f"({intento}/{settings.MAX_INTENTOS})...")
                     time.sleep(2)
                 else:
                     raise
         raise RuntimeError(f"El LLM no respondió tras {settings.MAX_INTENTOS} intentos: {ultimo_error}")
+
+    def _reparar_llamada(self, texto_error: str):
+        """Si Groq rechazó la llamada solo porque el modelo pasó el cliente como texto (p. ej. el
+        nombre de un perfil, "balance_cero", en lugar de su CustomerId), se traduce al CustomerId y
+        se ejecuta esa misma llamada. Repetir la petición no sirve: el modelo vuelve a generar lo
+        mismo y se agotan los intentos."""
+        llamada = extraer_llamada_fallida(texto_error)
+        if llamada is None:
+            return None
+        nombre, argumentos = llamada
+        nombres_validos = {e['function']['name'] for e in ESQUEMAS}
+        if nombre not in nombres_validos:
+            return None
+        valor = argumentos.get('customer_id')
+        if valor is None or isinstance(valor, int):
+            return None          # el fallo no es el identificador del cliente: mejor reintentar
+        cid = self.herramientas.resolver_customer_id(valor)
+        if cid is None:
+            return None
+        return respuesta_con_llamada(nombre, {**argumentos, 'customer_id': cid})
 
     @staticmethod
     def _extraer(respuesta):

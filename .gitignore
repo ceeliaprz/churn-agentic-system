@@ -33,3 +33,7 @@ Thumbs.db
 NOTAS_CONTINUACION.md
 PLAN.md
 docs/hallazgos_orquestador_chat.md
+
+# Tests y caché de pytest (no forman parte del entregable)
+tests/
+.pytest_cache/
